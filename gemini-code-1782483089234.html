@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>果味龍 Fruity Dragon - 水果送貨服務</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --primary-color: #2E7D32;
+            --accent-color: #FF9800;
+            --bg-color: #f5f7f6;
+            --hot-color: #E53935;
+        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: #333; }
+        
+        /* 置頂 LOGO 圖片 */
+        header { background-color: white; text-align: center; padding: 15px 15px 5px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .main-logo-img { max-width: 220px; height: auto; display: block; margin: 0 auto; }
+        
+        /* 導航 */
+        .nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; background: #e0e0e0; font-size: 14px; font-weight: bold; }
+        .logout-btn { color: #d32f2f; cursor: pointer; }
+
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* 分類標題 */
+        .section-title { font-size: 20px; margin: 25px 0 15px 0; padding-left: 10px; border-left: 5px solid var(--primary-color); display: flex; align-items: center; justify-content: space-between; }
+        .section-title.hot { border-left-color: var(--hot-color); color: var(--hot-color); }
+        
+        /* 表單 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group label .required-star { color: red; margin-left: 3px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        
+        /* 橫向並排輸入框（用喺價錢同單位） */
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+        button { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        .switch-link { text-align: center; margin-top: 15px; color: #666; font-size: 14px; cursor: pointer; text-decoration: underline; }
+
+        /* 產品目錄 */
+        .product-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .product-item { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; border: 1px solid #eee; }
+        .product-item.hot-border { border: 1.5px solid var(--hot-color); }
+        .product-img { width: 100%; height: 130px; object-fit: cover; background: #eaeee1; }
+        .product-info { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .product-name { font-weight: bold; font-size: 15px; }
+        .product-price { color: var(--accent-color); font-weight: bold; margin: 5px 0; font-size: 16px; }
+        .qty-badge { background: #ffe0b2; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        
+        /* 加減數量掣 */
+        .quantity-control { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: #f5f5f5; border-radius: 30px; padding: 2px; }
+        .qty-btn { width: 32px; height: 32px; padding: 0; background: white; color: #333; border-radius: 50%; border: 1px solid #ddd; font-size: 18px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* 底部購物車條 */
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--accent-color); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 99; }
+        
+        /* 彈窗 */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; max-height: 85%; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; box-sizing: border-box; }
+        .close-modal { text-align: right; font-weight: bold; color: #999; cursor: pointer; margin-bottom: 15px; font-size: 16px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+
+        /* 範例畫面 (Live Preview) */
+        .preview-box { background: #fffde7; border: 2px dashed #fbc02d; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .preview-title { font-size: 12px; color: #f57f17; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+
+        /* 訂單管理 */
+        .order-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fafafa; }
+        .order-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 14px;}
+        .order-badge { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+        .tab-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; background: #eee; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .tab-btn.active { background: var(--primary-color); color: white; }
+        
+        .delete-btn { background: #c62828; padding: 5px 10px; font-size: 12px; width: auto; display: inline-block; margin-top: 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- 置頂：果味龍 LOGO -->
+    <header>
+        <img src="logo.png" alt="果味龍 Fruity Dragon" class="main-logo-img" onerror="this.onerror=null; this.src='https://i.imgur.com/vH9bE9F.png';">
+    </header>
+
+    <!-- 導航狀態欄 -->
+    <div class="nav-bar" v-if="currentUser || isAdmin">
+        <span>歡迎, {{ isAdmin ? '管理員' : currentUser.name }}</span>
+        <span class="logout-btn" @click="logout">登出</span>
+    </div>
+
+    <div class="container">
+        
+        <!-- ================= 登入 / 註冊頁面 ================= -->
+        <div v-if="!currentUser && !isAdmin">
+            <div class="card" v-if="authMode !== 'admin'">
+                <h2>{{ authMode === 'login' ? '會員登入' : '新會員登記' }}</h2>
+                
+                <div class="form-group" v-if="authMode === 'register'">
+                    <label>姓名</label>
+                    <input type="text" v-model="form.name" placeholder="請輸入姓名">
+                </div>
+                
+                <div class="form-group">
+                    <label>電話號碼<span class="required-star" v-if="authMode === 'register'">* (必填)</span></label>
+                    <input type="tel" v-model="form.phone" placeholder="例如: 91234567" required>
+                </div>
+
+                <div class="form-group" v-if="authMode === 'register'">
+                    <label>送餐地址 (請以中文填寫)<span class="required-star">* (必填)</span></label>
+                    <textarea v-model="form.address" placeholder="請以中文填寫完整送貨地址 (例如: 九龍旺角...)" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>密碼</label>
+                    <input type="password" v-model="form.password" placeholder="請輸入密碼">
+                </div>
+
+                <button @click="handleAuth">{{ authMode === 'login' ? '立即登入' : '完成登記並登入' }}</button>
+                <div class="switch-link" @click="authMode = (authMode === 'login' ? 'register' : 'login')">{{ authMode === 'login' ? '未有帳戶？按此登記新會員' : '已有帳戶？按此登入' }}</div>
+                <div class="switch-link" style="color: #999; font-size: 12px;" @click="authMode = 'admin'">管理員通道</div>
+            </div>
+
+            <!-- 管理員登入 -->
+            <div class="card" v-if="authMode === 'admin'">
+                <h2>管理員登入通道</h2>
+                <div class="form-group"><label>管理員帳號</label><input type="text" v-model="adminForm.username"></div>
+                <div class="form-group"><label>密碼</label><input type="password" v-model="adminForm.password"></div>
+                <button style="background-color: #333;" @click="handleAdminLogin">管理員登入</button>
+                <div class="switch-link" @click="authMode = 'login'">返回會員登入</div>
+            </div>
+        </div>
+
+        <!-- ================= 會員產品目錄頁 ================= -->
+        <div v-if="currentUser && !isAdmin">
+            
+            <!-- 今期熱賣 -->
+            <div class="section-title hot">🔥 今期熱賣🔥<span>HOT</span></div>
+            <div class="product-list">
+                <div class="product-item hot-border" v-for="prod in hotProducts" :key="prod.id">
+                    <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
+                    <div class="product-info">
+                        <div>
+                            <div class="product-name">{{ prod.name }}</div>
+                            <!-- 修改點：顯示自訂單位 -->
+                            <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
+                        </div>
+                        <div class="quantity-control">
+                            <button class="qty-btn" @click="removeFromCart(prod)">-</button>
+                            <span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span>
+                            <button class="qty-btn" @click="addToCart(prod)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他正貨 -->
+            <div class="section-title">🍏 其他正貨<span>REGULAR</span></div>
+            <div class="product-list">
+                <div class="product-item" v-for="prod in regularProducts" :key="prod.id">
+                    <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
+                    <div class="product-info">
+                        <div>
+                            <div class="product-name">{{ prod.name }}</div>
+                            <!-- 修改點：顯示自訂單位 -->
+                            <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
+                        </div>
+                        <div class="quantity-control">
+                            <button class="qty-btn" @click="removeFromCart(prod)">-</button>
+                            <span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span>
+                            <button class="qty-btn" @click="addToCart(prod)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部查看購物車條 -->
+            <div class="cart-bar" v-if="cartTotalQuantity > 0" @click="showCartModal = true">
+                <span>🛒 查看購物車 (共 {{ cartTotalQuantity }} 件)</span>
+                <span>總計: ${{ cartTotalPrice }} ＞</span>
+            </div>
+        </div>
+
+        <!-- ================= 購物車彈窗 ================= -->
+        <div class="modal" v-if="showCartModal && currentUser">
+            <div class="modal-content">
+                <div class="close-modal" @click="showCartModal = false">✕ 關閉</div>
+                <h2>您的購物車</h2>
+                <div v-for="item in cart" :key="item.id" class="cart-item">
+                    <!-- 修改點：明細顯示數量及單位 -->
+                    <span>{{ item.name }} x {{ item.quantity }}{{ item.unit || '個' }}</span>
+                    <span>${{ item.price * item.quantity }}</span>
+                </div>
+                <div style="text-align: right; font-weight: bold; margin: 15px 0; font-size: 18px; color: var(--accent-color);">總金額: ${{ cartTotalPrice }}</div>
+                <div class="form-group">
+                    <label>訂單備註 / 特別要求</label>
+                    <textarea v-model="orderNote" placeholder="例如：包裝要好少少、放管理處"></textarea>
+                </div>
+                <button style="background: #25D366;" @click="submitOrder">🟢 確認落單 (自動開啟 WhatsApp)</button>
+            </div>
+        </div>
+
+        <!-- ================= 管理員後台 ================= -->
+        <div v-if="isAdmin">
+            <div class="tab-group">
+                <button class="tab-btn" :class="{active: adminTab === 'products'}" @click="adminTab = 'products'">📦 產品管理</button>
+                <button class="tab-btn" :class="{active: adminTab === 'orders'}" @click="adminTab = 'orders'">📋 訂單管理 ({{ orders.length }})</button>
+            </div>
+
+            <!-- 分頁 1: 產品管理 -->
+            <div v-if="adminTab === 'products'">
+                <div class="card" style="background: #f9f9f9; border: 1px solid #ddd;">
+                    <h3 style="margin-top:0; color:var(--primary-color);">➕ 新增產品內容</h3>
+                    <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name" placeholder="例如：日本香印提子"></div>
+                    
+                    <!-- 修改點：價錢同自訂單位橫向並排一齊填 -->
+                    <div class="form-row" style="margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label>價錢 ($)</label>
+                            <input type="number" v-model.number="newProduct.price" placeholder="例如：88">
+                        </div>
+                        <div class="form-group">
+                            <label>售賣單位</label>
+                            <input type="text" v-model="newProduct.unit" placeholder="例如：箱 / 盒 / 個 / 磅">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>產品分類</label>
+                        <select v-model="newProduct.category">
+                            <option value="hot">🔥 今期熱賣</option>
+                            <option value="regular">🍏 其他正貨</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>圖片網址 (URL)</label><input type="text" v-model="newProduct.image" placeholder="請貼上網絡圖片網址"></div>
+
+                    <!-- 範例預覽畫面同步更新單位 -->
+                    <div class="preview-box">
+                        <div class="preview-title">👀 顧客看到的範例畫面 (即時預覽)：</div>
+                        <div style="width: 160px; margin: 0 auto;">
+                            <div class="product-item" :class="{'hot-border': newProduct.category === 'hot'}">
+                                <img :src="newProduct.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
+                                <div class="product-info" style="background:#fff;">
+                                    <div class="product-name">{{ newProduct.name || '（未輸入名稱）' }}</div>
+                                    <div class="product-price">${{ newProduct.price || 0 }} / {{ newProduct.unit || '個' }}</div>
+                                    <span v-if="newProduct.category === 'hot'" class="qty-badge" style="width:fit-content; margin-top:2px;">HOT 熱賣</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="addProduct" style="margin-top: 15px;">確認新增並上架</button>
+                </div>
+
+                <h3>📦 修改現有產品 (修改後自動保存)</h3>
+                
+                <!-- 熱賣修改 -->
+                <h4 style="color: var(--hot-color);">🔥 今期熱賣列表</h4>
+                <div v-for="prod in products.filter(p => p.category === 'hot')" :key="prod.id" class="card">
+                    <div class="form-group"><label>產品名稱</label><input type="text" v-model="prod.name" @change="saveProducts"></div>
+                    <div class="form-row" style="margin-bottom: 15px;">
+                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProducts"></div>
+                        <!-- 修改點：編輯現有產品單位 -->
+                        <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" placeholder="個/箱/盒" @change="saveProducts"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>分類</label>
+                        <select v-model="prod.category" @change="saveProducts">
+                            <option value="hot">🔥 今期熱賣</option>
+                            <option value="regular">🍏 其他正貨</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>圖片網址</label><input type="text" v-model="prod.image" @change="saveProducts"></div>
+                    
+                    <div class="preview-box">
+                        <div class="preview-title">👀 變更後的範例畫面：</div>
+                        <div style="width: 140px;"><div class="product-name" style="font-weight:bold;">{{prod.name}}</div><div class="product-price">${{prod.price}} / {{prod.unit || '個'}}</div></div>
+                    </div>
+                    <button class="delete-btn" @click="deleteProduct(prod.id)">❌ 刪除產品</button>
+                </div>
+
+                <!-- 正貨修改 -->
+                <h4 style="color: var(--primary-color);">🍏 其他正貨列表</h4>
+                <div v-for="prod in products.filter(p => p.category !== 'hot')" :key="prod.id" class="card">
+                    <div class="form-group"><label>產品名稱</label><input type="text" v-model="prod.name" @change="saveProducts"></div>
+                    <div class="form-row" style="margin-bottom: 15px;">
+                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProducts"></div>
+                        <!-- 修改點：編輯現有產品單位 -->
+                        <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" placeholder="個/箱/盒" @change="saveProducts"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>分類</label>
+                        <select v-model="prod.category" @change="saveProducts">
+                            <option value="hot">🔥 今期熱賣</option>
+                            <option value="regular">🍏 其他正貨</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>圖片網址</label><input type="text" v-model="prod.image" @change="saveProducts"></div>
+                    
+                    <div class="preview-box">
+                        <div class="preview-title">👀 變更後的範例畫面：</div>
+                        <div style="width: 140px;"><div class="product-name" style="font-weight:bold;">{{prod.name}}</div><div class="product-price">${{prod.price}} / {{prod.unit || '個'}}</div></div>
+                    </div>
+                    <button class="delete-btn" @click="deleteProduct(prod.id)">❌ 刪除產品</button>
+                </div>
+            </div>
+
+            <!-- 分頁 2: 管理訂單 -->
+            <div v-if="adminTab === 'orders'">
+                <h3>📋 訂單紀錄中心</h3>
+                <div v-if="orders.length === 0" style="text-align:center; padding: 30px; color: #999;">暫時未有任何訂單紀錄。</div>
+                <div v-for="ord in sortedOrders" :key="ord.id" class="order-card">
+                    <div class="order-header">
+                        <span>📅 {{ ord.date }}</span>
+                        <span class="order-badge">💰 總額: ${{ ord.total }}</span>
+                    </div>
+                    <div style="font-size: 14px; line-height: 1.6;">
+                        <strong>👤 顧客：</strong>{{ ord.customerName }} ({{ ord.customerPhone }})<br>
+                        <strong>📍 地址：</strong>{{ ord.address }}<br>
+                        <strong>📦 訂購內容：</strong>
+                        <div style="background: #fff; padding: 8px; border-radius: 4px; margin: 5px 0; border: 1px solid #eee;">
+                            <!-- 修改點：後台查單都會正確睇到 幾多箱/幾多盒 -->
+                            <div v-for="item in ord.items" :key="item.name">• {{ item.name }} x {{ item.quantity }}{{ item.unit || '個' }} ($${{ item.price * item.quantity }})</div>
+                        </div>
+                        <strong>✍️ 備註：</strong> <span style="color: #e65100;">{{ ord.note || '無' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+createApp({
+    setup() {
+        const merchantPhone = "85291234567"; // 接收訂單的商家電話
+
+        const authMode = ref('login');
+        const currentUser = ref(null);
+        const isAdmin = ref(false);
+        const showCartModal = ref(false);
+        const adminTab = ref('products');
+
+        const form = ref({ name: '', phone: '', address: '', password: '' });
+        const adminForm = ref({ username: '', password: '' });
+        const orderNote = ref('');
+        // 修改點：新增產品物件預設加埋 unit: '個'
+        const newProduct = ref({ name: '', price: '', unit: '個', category: 'regular', image: '' });
+
+        const users = ref(JSON.parse(localStorage.getItem('fd_users') || '[]'));
+        const products = ref([]);
+        const cart = ref([]);
+        const orders = ref(JSON.parse(localStorage.getItem('fd_orders') || '[]'));
+
+        // 預設產品加入了自訂單位
+        const defaultProducts = [
+            { id: 1, name: '菲律賓超甜香蕉', price: 20, unit: '梳', category: 'regular', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300' },
+            { id: 2, name: '新西蘭珍寶奇異果', price: 68, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300' },
+            { id: 3, name: '日本青森王林蘋果', price: 30, unit: '個', category: 'hot', image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300' },
+            { id: 4, name: '頂級日本香印提子', price: 298, unit: '箱', category: 'hot', image: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=300' }
+        ];
+
+        onMounted(() => {
+            const localProds = localStorage.getItem('fd_products');
+            if (localProds) {
+                products.value = JSON.parse(localProds);
+            } else {
+                products.value = defaultProducts;
+                localStorage.setItem('fd_products', JSON.stringify(defaultProducts));
+            }
+        });
+
+        const hotProducts = computed(() => products.value.filter(p => p.category === 'hot'));
+        const regularProducts = computed(() => products.value.filter(p => p.category !== 'hot'));
+        const sortedOrders = computed(() => [...orders.value].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
+
+        const handleAuth = () => {
+            if (authMode.value === 'register') {
+                if (!form.value.name || !form.value.phone || !form.value.address || !form.value.password) {
+                    alert('請填寫所有登記欄位！資料（包括電話及地址）為必填項。'); return;
+                }
+                if(users.value.find(u => u.phone === form.value.phone)) { alert('此電話已被登記！'); return; }
+                users.value.push({ ...form.value });
+                localStorage.setItem('fd_users', JSON.stringify(users.value));
+                currentUser.value = { ...form.value };
+                alert('登記成功並已成功登入！');
+            } else {
+                if (!form.value.phone || !form.value.password) { alert('請輸入電話及密碼登入！'); return; }
+                const user = users.value.find(u => u.phone === form.value.phone && u.password === form.value.password);
+                if (user) { currentUser.value = user; } else { alert('電話或密碼不正確！'); }
+            }
+        };
+
+        const handleAdminLogin = () => {
+            if (adminForm.value.username === 'admin' && adminForm.value.password === 'admin123') {
+                isAdmin.value = true;
+                authMode.value = 'login';
+            } else { alert('管理員帳號或密碼錯誤！'); }
+        };
+
+        const logout = () => { currentUser.value = null; isAdmin.value = false; cart.value = []; };
+        const addToCart = (product) => { const item = cart.value.find(i => i.id === product.id); if (item) item.quantity++; else cart.value.push({ ...product, quantity: 1 }); };
+        const removeFromCart = (product) => { const item = cart.value.find(i => i.id === product.id); if (item) { item.quantity--; if (item.quantity <= 0) cart.value = cart.value.filter(i => i.id !== product.id); } };
+        const getCartQty = (id) => { const item = cart.value.find(i => i.id === id); return item ? item.quantity : 0; };
+        const cartTotalQuantity = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+        const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+
+        const submitOrder = () => {
+            const now = new Date();
+            const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
+            
+            // 修改點：將產品單位（unit）一齊儲存到訂單入面
+            const newOrderObj = {
+                id: Date.now(),
+                timestamp: now.toISOString(),
+                date: timeString,
+                customerName: currentUser.value.name,
+                customerPhone: currentUser.value.phone,
+                address: currentUser.value.address,
+                items: cart.value.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, unit: i.unit || '個' })),
+                total: cartTotalPrice.value,
+                note: orderNote.value
+            };
+
+            orders.value.push(newOrderObj);
+            localStorage.setItem('fd_orders', JSON.stringify(orders.value));
+
+            // 修改點：格式化 WhatsApp 發送訊息，帶埋自訂單位
+            let itemText = '';
+            cart.value.forEach(item => { itemText += `• ${item.name} x ${item.quantity}${item.unit || '個'} (小計: $${item.price * item.quantity})\n`; });
+
+            const textMessage = 
+`🍊 *【果味龍 Fruity Dragon】新訂單* 🐉
+
+*顧客資料*
+• 姓名：${currentUser.value.name}
+• 電話：${currentUser.value.phone}
+• 送餐地址：${currentUser.value.address}
+
+*訂購內容*
+${itemText}
+*合計總金額：$${cartTotalPrice.value}*
+
+*顧客備註：*
+${orderNote.value || '無'}`;
+
+            const url = `https://api.whatsapp.com/send?phone=${merchantPhone}&text=${encodeURIComponent(textMessage)}`;
+            window.open(url, '_blank');
+            
+            cart.value = [];
+            showCartModal.value = false;
+            orderNote.value = '';
+            alert('訂單已同步至後台，並正為您打開 WhatsApp 送出！');
+        };
+
+        const saveProducts = () => { localStorage.setItem('fd_products', JSON.stringify(products.value)); };
+        const addProduct = () => {
+            if (!newProduct.value.name || !newProduct.value.price) { alert('請填寫產品名稱和價錢！'); return; }
+            const id = products.value.length ? products.value[products.value.length - 1].id + 1 : 1;
+            products.value.push({ id, ...newProduct.value });
+            saveProducts();
+            newProduct.value = { name: '', price: '', unit: '個', category: 'regular', image: '' };
+            alert('產品已成功新增上架！');
+        };
+        const deleteProduct = (id) => { if (confirm('確定要刪除此產品嗎？')) { products.value = products.value.filter(p => p.id !== id); saveProducts(); } };
+
+        return {
+            authMode, currentUser, isAdmin, showCartModal, adminTab,
+            form, adminForm, orderNote, newProduct,
+            products, hotProducts, regularProducts, cart, orders, sortedOrders,
+            cartTotalQuantity, cartTotalPrice,
+            handleAuth, handleAdminLogin, logout,
+            addToCart, removeFromCart, getCartQty, submitOrder,
+            addProduct, deleteProduct, saveProducts
+        };
+    }
+}).mount('#app');
+</script>
+
+</body>
+</html>
