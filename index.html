@@ -9,44 +9,28 @@
         :root {
             --primary-color: #2E7D32;
             --accent-color: #FF9800;
-            /* 🎨 修改點 3：全網頁底色同步改為 Logo 的米黃色，完美消融色差 */
             --bg-color: #f7f4e9; 
             --hot-color: #E53935;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: #333; }
-        
-        /* 置頂 LOGO 區塊：同步換上米黃底色，令 Logo 看似透明融入 */
         header { background-color: var(--bg-color); text-align: center; padding: 20px 15px 5px 15px; position: sticky; top: 0; z-index: 100; }
         .main-logo-img { max-width: 240px; height: auto; display: block; margin: 0 auto; }
-        
-        /* 導航 */
         .nav-bar { display: flex; justify-content: space-between; padding: 10px 20px; background: #e2decb; font-size: 14px; font-weight: bold; }
         .logout-btn { color: #d32f2f; cursor: pointer; }
-
         .container { max-width: 600px; margin: 20px auto; padding: 0 15px; padding-bottom: 120px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* 分類標題 */
         .section-title { font-size: 20px; margin: 25px 0 15px 0; padding-left: 10px; border-left: 5px solid var(--primary-color); display: flex; align-items: center; justify-content: space-between; }
         .section-title.hot { border-left-color: var(--hot-color); color: var(--hot-color); }
-        
-        /* 表單 */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
         .form-group label .required-star { color: red; margin-left: 3px; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        
         .form-row { display: flex; gap: 10px; }
         .form-row .form-group { flex: 1; margin-bottom: 0; }
-
         button { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         button:hover { opacity: 0.9; }
-        
-        /* 連結樣式 */
         .switch-link { text-align: center; margin-top: 15px; color: #666; font-size: 14px; cursor: pointer; text-decoration: underline; }
         .forgot-link { display: inline-block; margin-top: 5px; font-size: 13px; color: #e65100; cursor: pointer; text-decoration: underline; }
-
-        /* 產品目錄 */
         .product-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .product-item { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; border: 1px solid #eee; }
         .product-item.hot-border { border: 1.5px solid var(--hot-color); }
@@ -54,33 +38,22 @@
         .product-info { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
         .product-name { font-weight: bold; font-size: 15px; }
         .product-price { color: var(--accent-color); font-weight: bold; margin: 5px 0; font-size: 16px; }
-        
-        /* 加減數量掣 */
         .quantity-control { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: #f5f5f5; border-radius: 30px; padding: 2px; }
         .qty-btn { width: 32px; height: 32px; padding: 0; background: white; color: #333; border-radius: 50%; border: 1px solid #ddd; font-size: 18px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        /* 底部購物車條 */
         .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--accent-color); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 -2px 10px rgba(0,0,0,0.15); z-index: 99; }
-        
-        /* 彈窗 */
         .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; }
         .modal-content { background: white; width: 100%; max-height: 85%; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; box-sizing: border-box; }
         .close-modal { text-align: right; font-weight: bold; color: #999; cursor: pointer; margin-bottom: 15px; font-size: 16px; }
         .cart-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-
-        /* 上傳中狀態動畫提示 */
         .upload-loading { font-size: 13px; color: var(--accent-color); font-weight: bold; margin-top: 5px; display: block; }
-
         .preview-box { background: #fffde7; border: 2px dashed #fbc02d; padding: 15px; border-radius: 8px; margin-top: 10px; }
         .preview-title { font-size: 12px; color: #f57f17; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
-
         .order-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fafafa; }
         .order-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 14px;}
         .order-badge { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
         .tab-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { flex: 1; padding: 10px; background: #eee; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
         .tab-btn.active { background: var(--primary-color); color: white; }
-        
         .delete-btn { background: #c62828; padding: 5px 10px; font-size: 12px; width: auto; display: inline-block; margin-top: 8px; border-radius: 4px; }
     </style>
 </head>
@@ -97,33 +70,13 @@
     </div>
 
     <div class="container">
-        
         <div v-if="!currentUser && !isAdmin">
-            
             <div class="card" v-if="authMode === 'login' || authMode === 'register'">
                 <h2>{{ authMode === 'login' ? '會員登入' : '新會員登記' }}</h2>
-                
-                <div class="form-group" v-if="authMode === 'register'">
-                    <label>姓名</label>
-                    <input type="text" v-model="form.name" placeholder="請輸入姓名">
-                </div>
-                
-                <div class="form-group">
-                    <label>電話號碼<span class="required-star" v-if="authMode === 'register'">* (必填)</span></label>
-                    <input type="tel" v-model="form.phone" placeholder="例如: 91234567" required>
-                </div>
-
-                <div class="form-group" v-if="authMode === 'register'">
-                    <label>送餐地址 (請以中文填寫)<span class="required-star">* (必填)</span></label>
-                    <textarea v-model="form.address" placeholder="請以中文填寫完整送貨地址 (例如: 九龍旺角...)" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>密碼</label>
-                    <input type="password" v-model="form.password" placeholder="請輸入密碼">
-                    <div v-if="authMode === 'login'" class="forgot-link" @click="authMode = 'forgot'">忘記密碼？</div>
-                </div>
-
+                <div class="form-group" v-if="authMode === 'register'"><label>姓名</label><input type="text" v-model="form.name" placeholder="請輸入姓名"></div>
+                <div class="form-group"><label>電話號碼<span class="required-star" v-if="authMode === 'register'">* (必填)</span></label><input type="tel" v-model="form.phone" placeholder="例如: 91234567" required></div>
+                <div class="form-group" v-if="authMode === 'register'"><label>送餐地址 (請以中文填寫)<span class="required-star">* (必填)</span></label><textarea v-model="form.address" placeholder="請以中文填寫完整送貨地址" required></textarea></div>
+                <div class="form-group"><label>密碼</label><input type="password" v-model="form.password" placeholder="請輸入密碼"><div v-if="authMode === 'login'" class="forgot-link" @click="authMode = 'forgot'">忘記密碼？</div></div>
                 <button @click="handleAuth">{{ authMode === 'login' ? '立即登入' : '完成登記並登入' }}</button>
                 <div class="switch-link" @click="authMode = (authMode === 'login' ? 'register' : 'login')">{{ authMode === 'login' ? '未有帳戶？按此登記新會員' : '已有帳戶？按此登入' }}</div>
                 <div class="switch-link" style="color: #999; font-size: 12px;" @click="authMode = 'admin'">管理員通道</div>
@@ -132,10 +85,7 @@
             <div class="card" v-if="authMode === 'forgot'">
                 <h2>搵返密碼中心</h2>
                 <p style="font-size: 14px; color: #666; line-height: 1.5;">請輸入你登記會員時使用的電話號碼，系統將引導你發送 WhatsApp 給店主查閱密碼。</p>
-                <div class="form-group">
-                    <label>登記電話號碼</label>
-                    <input type="tel" v-model="forgotPhone" placeholder="例如: 91234567">
-                </div>
+                <div class="form-group"><label>登記電話號碼</label><input type="tel" v-model="forgotPhone" placeholder="例如: 91234567"></div>
                 <button style="background: #25D366;" @click="submitForgotPath">🟢 經 WhatsApp 聯絡店主搵返</button>
                 <div class="switch-link" @click="authMode = 'login'">返回會員登入</div>
             </div>
@@ -155,15 +105,8 @@
                 <div class="product-item hot-border" v-for="prod in hotProducts" :key="prod.id">
                     <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
                     <div class="product-info">
-                        <div>
-                            <div class="product-name">{{ prod.name }}</div>
-                            <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
-                        </div>
-                        <div class="quantity-control">
-                            <button class="qty-btn" @click="removeFromCart(prod)">-</button>
-                            <span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span>
-                            <button class="qty-btn" @click="addToCart(prod)">+</button>
-                        </div>
+                        <div><div class="product-name">{{ prod.name }}</div><div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div></div>
+                        <div class="quantity-control"><button class="qty-btn" @click="removeFromCart(prod)">-</button><span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span><button class="qty-btn" @click="addToCart(prod)">+</button></div>
                     </div>
                 </div>
             </div>
@@ -173,22 +116,14 @@
                 <div class="product-item" v-for="prod in regularProducts" :key="prod.id">
                     <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
                     <div class="product-info">
-                        <div>
-                            <div class="product-name">{{ prod.name }}</div>
-                            <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
-                        </div>
-                        <div class="quantity-control">
-                            <button class="qty-btn" @click="removeFromCart(prod)">-</button>
-                            <span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span>
-                            <button class="qty-btn" @click="addToCart(prod)">+</button>
-                        </div>
+                        <div><div class="product-name">{{ prod.name }}</div><div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div></div>
+                        <div class="quantity-control"><button class="qty-btn" @click="removeFromCart(prod)">-</button><span style="font-weight: bold;">{{ getCartQty(prod.id) }}</span><button class="qty-btn" @click="addToCart(prod)">+</button></div>
                     </div>
                 </div>
             </div>
 
             <div class="cart-bar" v-if="cartTotalQuantity > 0" @click="showCartModal = true">
-                <span>🛒 查看購物車 (共 {{ cartTotalQuantity }} 件)</span>
-                <span>總計: ${{ cartTotalPrice }} ＞</span>
+                <span>🛒 查看購物車 (共 {{ cartTotalQuantity }} 件)</span><span>總計: ${{ cartTotalPrice }} ＞</span>
             </div>
         </div>
 
@@ -196,15 +131,9 @@
             <div class="modal-content">
                 <div class="close-modal" @click="showCartModal = false">✕ 關閉</div>
                 <h2>您的購物車</h2>
-                <div v-for="item in cart" :key="item.id" class="cart-item">
-                    <span>{{ item.name }} x {{ item.quantity }}{{ item.unit || '個' }}</span>
-                    <span>${{ item.price * item.quantity }}</span>
-                </div>
+                <div v-for="item in cart" :key="item.id" class="cart-item"><span>{{ item.name }} x {{ item.quantity }}{item.unit || '個'}</span><span>${{ item.price * item.quantity }}</span></div>
                 <div style="text-align: right; font-weight: bold; margin: 15px 0; font-size: 18px; color: var(--accent-color);">總金額: ${{ cartTotalPrice }}</div>
-                <div class="form-group">
-                    <label>訂單備註 / 特別要求</label>
-                    <textarea v-model="orderNote" placeholder="例如：包裝要好少少、放管理處"></textarea>
-                </div>
+                <div class="form-group"><label>訂單備註 / 特別要求</label><textarea v-model="orderNote" placeholder="例如：放管理處"></textarea></div>
                 <button style="background: #25D366;" @click="submitOrder">🟢 確認落單 (自動開啟 WhatsApp)</button>
             </div>
         </div>
@@ -218,43 +147,31 @@
             <div v-if="adminTab === 'products'">
                 <div class="card" style="background: #f9f9f9; border: 1px solid #ddd;">
                     <h3 style="margin-top:0; color:var(--primary-color);">➕ 新增產品內容</h3>
-                    <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name" placeholder="例如：日本香印提子"></div>
-                    
+                    <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name"></div>
                     <div class="form-row" style="margin-bottom: 15px;">
-                        <div class="form-group">
-                            <label>價錢 ($)</label>
-                            <input type="number" v-model.number="newProduct.price" placeholder="例如：88">
-                        </div>
-                        <div class="form-group">
-                            <label>售賣單位</label>
-                            <input type="text" v-model="newProduct.unit" placeholder="例如：箱 / 盒 / 個">
-                        </div>
+                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="newProduct.price"></div>
+                        <div class="form-group"><label>售賣單位</label><input type="text" v-model="newProduct.unit"></div>
                     </div>
-
                     <div class="form-group">
                         <label>產品分類</label>
-                        <select v-model="newProduct.category">
-                            <option value="hot">🔥 今期熱賣</option>
-                            <option value="regular">🍏 其他正貨</option>
-                        </select>
+                        <select v-model="newProduct.category"><option value="hot">🔥 今期熱賣</option><option value="regular">🍏 其他正貨</option></select>
                     </div>
 
                     <div class="form-group" style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                        <label style="color:var(--primary-color);">🖼️ 直接上傳相片（支援手機影相/揀相）</label>
+                        <label style="color:var(--primary-color);">🖼️ 直接上傳相片（支援手機即拍即傳）</label>
                         <input type="file" accept="image/*" @change="uploadImage($event, 'newProduct')">
-                        <span v-if="isUploading === 'newProduct'" class="upload-loading">⏳ 正在上傳相片至雲端，請稍候...</span>
-                        <input type="text" v-model="newProduct.image" placeholder="上傳後會自動生成圖片網址" style="margin-top:8px; font-size:12px; background:#f5f5f5;" readonly>
+                        <span v-if="isUploading === 'newProduct'" class="upload-loading">⏳ 正在安全地上傳至雲端相簿...</span>
+                        <input type="text" v-model="newProduct.image" placeholder="自動生成網址" style="margin-top:8px; font-size:12px;" readonly>
                     </div>
 
                     <div class="preview-box">
-                        <div class="preview-title">👀 顧客看到的範例畫面 (即時預覽)：</div>
+                        <div class="preview-title">👀 即時預覽：</div>
                         <div style="width: 160px; margin: 0 auto;">
                             <div class="product-item" :class="{'hot-border': newProduct.category === 'hot'}">
                                 <img :src="newProduct.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img">
                                 <div class="product-info" style="background:#fff;">
-                                    <div class="product-name">{{ newProduct.name || '（未輸入名稱）' }}</div>
+                                    <div class="product-name">{{ newProduct.name || '（未輸入）' }}</div>
                                     <div class="product-price">${{ newProduct.price || 0 }} / {{ newProduct.unit || '個' }}</div>
-                                    <span v-if="newProduct.category === 'hot'" class="qty-badge" style="width:fit-content; margin-top:2px;">HOT 熱賣</span>
                                 </div>
                             </div>
                         </div>
@@ -262,8 +179,7 @@
                     <button @click="addProduct" :disabled="isUploading !== ''" style="margin-top: 15px;">確認新增並上架</button>
                 </div>
 
-                <h3>📦 修改現有產品 (修改後自動保存)</h3>
-                
+                <h3>📦 修改現有產品 (自動保存)</h3>
                 <h4 style="color: var(--hot-color);">🔥 今期熱賣列表</h4>
                 <div v-for="prod in products.filter(p => p.category === 'hot')" :key="prod.id" class="card">
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="prod.name" @change="saveProducts"></div>
@@ -271,20 +187,11 @@
                         <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProducts"></div>
                         <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" @change="saveProducts"></div>
                     </div>
-                    <div class="form-group">
-                        <label>分類</label>
-                        <select v-model="prod.category" @change="saveProducts">
-                            <option value="hot">🔥 今期熱賣</option>
-                            <option value="regular">🍏 其他正貨</option>
-                        </select>
-                    </div>
-                    
                     <div class="form-group" style="background: #fdfdfd; padding: 10px; border: 1px dashed #ccc;">
                         <label>🔄 更換產品相片</label>
                         <input type="file" accept="image/*" @change="uploadImage($event, prod)">
-                        <span v-if="isUploading === prod.id" class="upload-loading">⏳ 正在上傳相片，請稍候...</span>
+                        <span v-if="isUploading === prod.id" class="upload-loading">⏳ 正在更新相片...</span>
                     </div>
-
                     <button class="delete-btn" @click="deleteProduct(prod.id)">❌ 刪除產品</button>
                 </div>
 
@@ -295,20 +202,11 @@
                         <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProducts"></div>
                         <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" @change="saveProducts"></div>
                     </div>
-                    <div class="form-group">
-                        <label>分類</label>
-                        <select v-model="prod.category" @change="saveProducts">
-                            <option value="hot">🔥 今期熱賣</option>
-                            <option value="regular">🍏 其他正貨</option>
-                        </select>
-                    </div>
-
                     <div class="form-group" style="background: #fdfdfd; padding: 10px; border: 1px dashed #ccc;">
                         <label>🔄 更換產品相片</label>
                         <input type="file" accept="image/*" @change="uploadImage($event, prod)">
-                        <span v-if="isUploading === prod.id" class="upload-loading">⏳ 正在上傳相片，請稍候...</span>
+                        <span v-if="isUploading === prod.id" class="upload-loading">⏳ 正在更新相片...</span>
                     </div>
-
                     <button class="delete-btn" @click="deleteProduct(prod.id)">❌ 刪除產品</button>
                 </div>
             </div>
@@ -317,13 +215,9 @@
                 <h3>📋 訂單紀錄中心</h3>
                 <div v-if="orders.length === 0" style="text-align:center; padding: 30px; color: #999;">暫時未有任何訂單紀錄。</div>
                 <div v-for="ord in sortedOrders" :key="ord.id" class="order-card">
-                    <div class="order-header">
-                        <span>📅 {{ ord.date }}</span>
-                        <span class="order-badge">💰 總額: ${{ ord.total }}</span>
-                    </div>
+                    <div class="order-header"><span>📅 {{ ord.date }}</span><span class="order-badge">💰 總額: ${{ ord.total }}</span></div>
                     <div style="font-size: 14px; line-height: 1.6;">
-                        <strong>👤 顧客：</strong>{{ ord.customerName }} ({{ ord.customerPhone }})<br>
-                        <strong>📍 地址：</strong>{{ ord.address }}<br>
+                        <strong>👤 顧客：</strong>{{ ord.customerName }} ({{ ord.customerPhone }})<br><strong>📍 地址：</strong>{{ ord.address }}<br>
                         <strong>📦 訂購內容：</strong>
                         <div style="background: #fff; padding: 8px; border-radius: 4px; margin: 5px 0; border: 1px solid #eee;">
                             <div v-for="item in ord.items" :key="item.name">• {{ item.name }} x {{ item.quantity }}{{ item.unit || '個' }} (${{ item.price * item.quantity }})</div>
@@ -333,7 +227,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -342,21 +235,23 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        const merchantPhone = "85291234567"; // 👈 請改為你接收訂單同重設密碼嘅真實電話
+        const merchantPhone = "85291234567"; // 👈 記得改成你接單的真實電話號碼
+
+        // 💡 填入你剛才申請到的 Cloudinary 資料 
+        const cloudinaryCloudName = "dcrglmacm"; 
+        const cloudinaryUploadPreset = "nl3juyq6"; 
 
         const authMode = ref('login');
         const currentUser = ref(null);
         const isAdmin = ref(false);
         const showCartModal = ref(false);
         const adminTab = ref('products');
-
         const form = ref({ name: '', phone: '', address: '', password: '' });
         const adminForm = ref({ username: '', password: '' });
         const orderNote = ref('');
         const forgotPhone = ref(''); 
         const isUploading = ref(''); 
         const newProduct = ref({ name: '', price: '', unit: '個', category: 'regular', image: '' });
-
         const users = ref(JSON.parse(localStorage.getItem('fd_users') || '[]'));
         const products = ref([]);
         const cart = ref([]);
@@ -364,98 +259,76 @@ createApp({
 
         const defaultProducts = [
             { id: 1, name: '菲律賓超甜香蕉', price: 20, unit: '梳', category: 'regular', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300' },
-            { id: 2, name: '新西蘭珍寶奇異果', price: 68, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300' },
-            { id: 3, name: '日本青森王林蘋果', price: 30, unit: '個', category: 'hot', image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300' },
-            { id: 4, name: '頂級日本香印提子', price: 298, unit: '箱', category: 'hot', image: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=300' }
+            { id: 2, name: '新西蘭珍寶奇異果', price: 68, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300' }
         ];
 
         onMounted(() => {
             const localProds = localStorage.getItem('fd_products');
-            if (localProds) {
-                products.value = JSON.parse(localProds);
-            } else {
-                products.value = defaultProducts;
-                localStorage.setItem('fd_products', JSON.stringify(defaultProducts));
-            }
+            if (localProds) products.value = JSON.parse(localProds);
+            else { products.value = defaultProducts; localStorage.setItem('fd_products', JSON.stringify(defaultProducts)); }
         });
 
         const hotProducts = computed(() => products.value.filter(p => p.category === 'hot'));
         const regularProducts = computed(() => products.value.filter(p => p.category !== 'hot'));
         const sortedOrders = computed(() => [...orders.value].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
 
-        // 📸 修改點 1：異步直接上傳相片去 Imgur 免費圖床 API
+        // 📸 全新 Cloudinary 穩定直傳核心代碼
         const uploadImage = async (event, target) => {
             const file = event.target.files[0];
             if (!file) return;
+
+            if(cloudinaryCloudName.includes("請在") || cloudinaryUploadPreset.includes("請在")) {
+                alert("❌ 請先在代碼中填入你申請的 Cloudinary 資料！");
+                return;
+            }
 
             const targetID = target === 'newProduct' ? 'newProduct' : target.id;
             isUploading.value = targetID;
 
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('file', file);
+            formData.append('upload_preset', cloudinaryUploadPreset);
 
             try {
-                // 使用 Imgur 匿名上傳 API 接口
-                const response = await fetch('https://api.imgur.com/3/image', {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, {
                     method: 'POST',
-                    headers: { 'Authorization': 'Client-ID 7e76191b7e41cf3' }, // 內置共用 Client-ID
                     body: formData
                 });
                 const result = await response.json();
                 
-                if (result.success) {
-                    const imageUrl = result.data.link;
-                    if (target === 'newProduct') {
-                        newProduct.value.image = imageUrl;
-                    } else {
-                        target.image = imageUrl;
-                        saveProducts(); // 如果係現有產品，直接儲存
-                    }
-                    alert('📸 相片上傳及自動生成網址成功！');
-                } else {
-                    alert('上傳失敗，請稍後重試。');
-                }
+                if (result.secure_url) {
+                    if (target === 'newProduct') newProduct.value.image = result.secure_url;
+                    else { target.image = result.secure_url; saveProducts(); }
+                    alert('📸 相片上傳成功！前台已完美同步！');
+                } else { alert('上傳失敗，請檢查 Cloudinary 設定。'); }
             } catch (error) {
-                console.error(error);
                 alert('網絡錯誤，無法連接上傳伺服器。');
-            } finally {
-                isUploading.value = '';
-            }
+            } finally { isUploading.value = ''; }
         };
 
-        // 🔑 修改點 2：忘記密碼發送引導去店主 WhatsApp
         const submitForgotPath = () => {
             if (!forgotPhone.value) { alert('請填寫登記的電話號碼！'); return; }
-            
-            const message = `你好【果味龍】，我係會員。我唔小心唔記得咗密碼，請幫我喺系統查返。🙏\n\n我的登記電話號碼是：${forgotPhone.value}`;
-            const url = `https://api.whatsapp.com/send?phone=${merchantPhone}&text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-            alert('已為您準備好申請訊息，正開啟 WhatsApp 聯絡店主！');
+            const message = `你好【果味龍】，我係會員。我唔小心唔記得了密碼，請幫我查返。🙏\n\n我的登記電話是：${forgotPhone.value}`;
+            window.open(`https://api.whatsapp.com/send?phone=${merchantPhone}&text=${encodeURIComponent(message)}`, '_blank');
             authMode.value = 'login';
         };
 
         const handleAuth = () => {
             if (authMode.value === 'register') {
-                if (!form.value.name || !form.value.phone || !form.value.address || !form.value.password) {
-                    alert('請填寫所有登記欄位！電話及地址為必填項。'); return;
-                }
+                if (!form.value.name || !form.value.phone || !form.value.address || !form.value.password) { alert('請填寫所有欄位！'); return; }
                 if(users.value.find(u => u.phone === form.value.phone)) { alert('此電話已被登記！'); return; }
-                users.value.push({ ...form.value });
-                localStorage.setItem('fd_users', JSON.stringify(users.value));
-                currentUser.value = { ...form.value };
-                alert('登記成功並已成功登入！');
+                users.value.push({ ...form.value }); localStorage.setItem('fd_users', JSON.stringify(users.value));
+                currentUser.value = { ...form.value }; alert('登記成功並已登入！');
             } else {
-                if (!form.value.phone || !form.value.password) { alert('請輸入電話及密碼登入！'); return; }
+                if (!form.value.phone || !form.value.password) { alert('請輸入電話及密碼！'); return; }
                 const user = users.value.find(u => u.phone === form.value.phone && u.password === form.value.password);
-                if (user) { currentUser.value = user; } else { alert('電話或密碼不正確！'); }
+                if (user) currentUser.value = user; else alert('電話或密碼不正確！');
             }
         };
 
         const handleAdminLogin = () => {
-            if (adminForm.value.username === 'admin' && adminForm.value.password === 'admin123') {
-                isAdmin.value = true;
-                authMode.value = 'login';
-            } else { alert('管理員帳號或密碼錯誤！'); }
+            if (adminForm.value.username === 'admin' && adminForm.value.password === 'admin123') { isAdmin.value = true; authMode.value = 'login'; } 
+            else alert('帳號或密碼錯誤！');
         };
 
         const logout = () => { currentUser.value = null; isAdmin.value = false; cart.value = []; };
@@ -468,72 +341,37 @@ createApp({
         const submitOrder = () => {
             const now = new Date();
             const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            
             const newOrderObj = {
-                id: Date.now(),
-                timestamp: now.toISOString(),
-                date: timeString,
-                customerName: currentUser.value.name,
-                customerPhone: currentUser.value.phone,
-                address: currentUser.value.address,
+                id: Date.now(), timestamp: now.toISOString(), date: timeString,
+                customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address,
                 items: cart.value.map(i => ({ name: i.name, quantity: i.quantity, price: i.price, unit: i.unit || '個' })),
-                total: cartTotalPrice.value,
-                note: orderNote.value
+                total: cartTotalPrice.value, note: orderNote.value
             };
-
-            orders.value.push(newOrderObj);
-            localStorage.setItem('fd_orders', JSON.stringify(orders.value));
+            orders.value.push(newOrderObj); localStorage.setItem('fd_orders', JSON.stringify(orders.value));
 
             let itemText = '';
             cart.value.forEach(item => { itemText += `• ${item.name} x ${item.quantity}${item.unit || '個'} (小計: $${item.price * item.quantity})\n`; });
-
-            const textMessage = 
-`🍊 *【果味龍 Fruity Dragon】新訂單* 🐉
-
-*顧客資料*
-• 姓名：${currentUser.value.name}
-• 電話：${currentUser.value.phone}
-• 送餐地址：${currentUser.value.address}
-
-*訂購內容*
-${itemText}
-*合計總金額：$${cartTotalPrice.value}*
-
-*顧客備註：*
-${orderNote.value || '無'}`;
-
-            const url = `https://api.whatsapp.com/send?phone=${merchantPhone}&text=${encodeURIComponent(textMessage)}`;
-            window.open(url, '_blank');
-            
-            cart.value = [];
-            showCartModal.value = false;
-            orderNote.value = '';
-            alert('訂單已同步至後台，並正為您打開 WhatsApp 送出！');
+            const textMessage = `🍊 *【果味龍】新訂單* 🐉\n\n*顧客資料*\n• 姓名：${currentUser.value.name}\n• 電話：${currentUser.value.phone}\n• 送餐地址：${currentUser.value.address}\n\n*訂購內容*\n${itemText}\n*合計總金額：$${cartTotalPrice.value}*\n\n*顧客備註：*\n${orderNote.value || '無'}`;
+            window.open(`https://api.whatsapp.com/send?phone=${merchantPhone}&text=${encodeURIComponent(textMessage)}`, '_blank');
+            cart.value = []; showCartModal.value = false; orderNote.value = ''; alert('訂單已送出！');
         };
 
         const saveProducts = () => { localStorage.setItem('fd_products', JSON.stringify(products.value)); };
         const addProduct = () => {
             if (!newProduct.value.name || !newProduct.value.price) { alert('請填寫產品名稱和價錢！'); return; }
             const id = products.value.length ? products.value[products.value.length - 1].id + 1 : 1;
-            products.value.push({ id, ...newProduct.value });
-            saveProducts();
-            newProduct.value = { name: '', price: '', unit: '個', category: 'regular', image: '' };
-            alert('產品已成功新增上架！');
+            products.value.push({ id, ...newProduct.value }); saveProducts();
+            newProduct.value = { name: '', price: '', unit: '個', category: 'regular', image: '' }; alert('產品已成功新增上架！');
         };
         const deleteProduct = (id) => { if (confirm('確定要刪除此產品嗎？')) { products.value = products.value.filter(p => p.id !== id); saveProducts(); } };
 
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab,
-            form, adminForm, orderNote, forgotPhone, isUploading, newProduct,
-            products, hotProducts, regularProducts, cart, orders, sortedOrders,
-            cartTotalQuantity, cartTotalPrice,
-            handleAuth, handleAdminLogin, logout, uploadImage, submitForgotPath,
-            addToCart, removeFromCart, getCartQty, submitOrder,
-            addProduct, deleteProduct, saveProducts
+            authMode, currentUser, isAdmin, showCartModal, adminTab, form, adminForm, orderNote, forgotPhone, isUploading, newProduct,
+            products, hotProducts, regularProducts, cart, orders, sortedOrders, cartTotalQuantity, cartTotalPrice,
+            handleAuth, handleAdminLogin, logout, uploadImage, submitForgotPath, addToCart, removeFromCart, getCartQty, submitOrder, addProduct, deleteProduct, saveProducts
         };
     }
 }).mount('#app');
 </script>
-
 </body>
 </html>
