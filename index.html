@@ -560,7 +560,7 @@ createApp({
                 itemText += `${idx + 1}. 【${item.name}】 ➔ ❌ ${item.quantity} ${item.unit || '個'}\n`;
             });
 
-            const exportMessage = `🚚 *【果味龍 - 出貨跟單單據】* 🐉\n-----------------------------\n*📅 落單時間：* ${order.date}\n*👤 收件顧客：* ${order.customerName} (${order.customerPhone})\n*📍 送貨地址：* ${order.address}\n-----------------------------\n*📦 水果明細：*\n${itemText}\n*💰 應收總金額：$${order.total}*\n-----------------------------\n*✍️ 客戶備註欄：* ${order.note || '無'}\n\n（請以此單據清點貨源安排司機出貨）`;
+            const exportMessage = ` *【果味龍 - 出貨跟單單據】* 🐉\n-----------------------------\n*📅 落單時間：* ${order.date}\n*👤 收件顧客：* ${order.customerName} (${order.customerPhone})\n*📍 送貨地址：* ${order.address}\n-----------------------------\n*📦 水果明細：*\n${itemText}\n*💰 應收總金額：$${order.total}*\n-----------------------------\n*✍️ 客戶備註欄：* ${order.note || '無'}\n\n（請以此單據清點貨源安排司機出貨）`;
 
             // 打開 WhatsApp 介面（由管理員自由決定發送俾司機、員工定自己）
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(exportMessage)}`, '_blank');
