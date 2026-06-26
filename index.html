@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>果味龍 Fruity Dragon - 水果送貨服務</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <style>
@@ -66,22 +66,19 @@
         .tab-btn.active { background: var(--primary-color); color: white; }
         .delete-btn { background: #c62828; padding: 5px 10px; font-size: 12px; width: auto; display: inline-block; margin-top: 8px; border-radius: 4px; }
         .global-loading { text-align: center; padding: 5px; background: #fff3cd; color: #856404; font-size: 12px; font-weight: bold; }
-        
-        /* 💡 核心修正：加入 v-cloak 避免 Vue 載入前程式碼外露 */
-        [v-cloak] { display: none !important; }
     </style>
 </head>
 <body>
 
-<div id="app" v-cloak>
+<div id="app">
     <div v-if="dbLoading" class="global-loading">⏳ 正在與雲端數據庫同步最新產品及訂單...</div>
 
     <header>
-        <img src="https://i.imgur.com/vH9bE9F.png" alt="果味龍 Fruity Dragon" class="main-logo-img">
+        <img src="logo.png" alt="果味龍 Fruity Dragon" class="main-logo-img" onerror="this.onerror=null; this.src='https://i.imgur.com/vH9bE9F.png';">
     </header>
 
     <div class="nav-bar" v-if="currentUser || isAdmin">
-        <span>歡迎, {{ isAdmin ? '管理員' : (currentUser ? currentUser.name : '') }}</span>
+        <span>歡迎, {{ isAdmin ? '管理員' : currentUser.name }}</span>
         <span class="logout-btn" @click="logout">登出</span>
     </div>
 
@@ -176,7 +173,7 @@
                 <button class="tab-btn" :class="{active: adminTab === 'orders'}" @click="adminTab = 'orders'">📋 訂單管理 ({{ orders.length }})</button>
             </div>
 
-            <div class="adminTab === 'products'">
+            <div v-if="adminTab === 'products'">
                 <div class="card" style="background: #f9f9f9; border: 1px solid #ddd;">
                     <h3 style="margin-top:0; color:var(--primary-color);">➕ 新增產品內容</h3>
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name"></div>
@@ -268,9 +265,11 @@ const { createApp, ref, computed, onMounted } = Vue;
 createApp({
     setup() {
         // ======================== 🔧 商家核心設定區 ========================
-        const merchantPhone = "85291234567"; 
+        const merchantPhone = "85291234567"; // 👈 填寫你的接單真實 WhatsApp 電話
         const cloudinaryCloudName = "dcrglmacm"; 
         const cloudinaryUploadPreset = "nl3juyq6"; 
+        
+        // 👈 【新加入】在這裡貼上剛才申請的 Firebase 數據庫網址 (尾端要有斜槓 /)
         const firebaseDatabaseURL = "https://fruity-dragon-de6b3-default-rtdb.firebaseio.com/"; 
         // =================================================================
 
@@ -279,7 +278,7 @@ createApp({
         const isAdmin = ref(false);
         const showCartModal = ref(false);
         const adminTab = ref('products');
-        const dbLoading = ref(true);
+        const dbLoading = ref(true); // 雲端載入狀態
 
         const form = ref({ name: '', phone: '', address: '', password: '' });
         const adminForm = ref({ username: '', password: '' });
@@ -294,72 +293,67 @@ createApp({
         const orders = ref([]);
         let db = null;
 
+        // 預設產品庫（如果雲端完全沒資料時初始化使用）
         const defaultProducts = [
             { id: 1, name: '菲律賓超甜香蕉', price: 20, unit: '梳', category: 'regular', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300' },
             { id: 2, name: '新西蘭珍寶奇異果', price: 68, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300' }
         ];
 
         onMounted(() => {
-            // 💡 修正儲存解析：防止從 Session 抓取資料時格式化錯誤
-            try {
-                const sessionUser = sessionStorage.getItem('fd_current_user');
-                const sessionAdmin = sessionStorage.getItem('fd_is_admin');
-                if (sessionUser && sessionUser !== "undefined") currentUser.value = JSON.parse(sessionUser);
-                if (sessionAdmin === 'true') isAdmin.value = true;
-            } catch (e) {
-                console.error("Session 讀取失敗:", e);
+            // 檢查 Session 狀態保持登入
+            const sessionUser = sessionStorage.getItem('fd_current_user');
+            const sessionAdmin = sessionStorage.getItem('fd_is_admin');
+            if (sessionUser) currentUser.value = JSON.parse(sessionUser);
+            else if (sessionAdmin === 'true') isAdmin.value = true;
+
+            // 初始化 Firebase
+            if(firebaseDatabaseURL.includes("請在這裡")) {
+                alert("❌ 請先在代碼第 262 行填入你的 Firebase 數據庫網址才能運作！");
+                dbLoading.value = false;
+                return;
             }
 
-            // 💡 核心修正：加強 Firebase 初始化錯誤攔截，避免阻塞 Vue 渲染
             try {
-                if (!firebaseDatabaseURL || firebaseDatabaseURL.includes("請在這裡")) {
-                    console.warn("Firebase URL 未配置或不正確，切換至本地模擬模式。");
-                    products.value = defaultProducts;
-                    dbLoading.value = false;
-                    return;
-                }
-
                 firebase.initializeApp({ databaseURL: firebaseDatabaseURL });
                 db = firebase.database();
 
-                // 雲端實時數據監聽
+                // 🌟 核心升級：雲端實時數據監聽（實現跨裝置秒級同步！）
+                // 1. 同步產品
                 db.ref('products').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        // 轉為陣列型態安全處理
                         products.value = Object.values(data);
                     } else {
                         products.value = defaultProducts;
                         db.ref('products').set(defaultProducts);
                     }
                     dbLoading.value = false;
-                }, (error) => {
-                    console.error("Firebase 讀取產品錯誤:", error);
-                    products.value = defaultProducts;
-                    dbLoading.value = false;
                 });
 
+                // 2. 同步會員資料
                 db.ref('users').on('value', (snapshot) => {
                     const data = snapshot.val();
                     users.value = data ? Object.values(data) : [];
                 });
 
+                // 3. 同步訂單紀錄
                 db.ref('orders').on('value', (snapshot) => {
                     const data = snapshot.val();
                     orders.value = data ? Object.values(data) : [];
                 });
 
             } catch (err) {
-                console.error("Firebase 連接失敗，自動啟用本地預設模式：", err);
-                products.value = defaultProducts;
+                console.error(err);
+                alert("Firebase 連接失敗，請檢查網址格式是否正確。");
                 dbLoading.value = false;
             }
         });
 
-        const hotProducts = computed(() => products.value ? products.value.filter(p => p && p.category === 'hot') : []);
-        const regularProducts = computed(() => products.value ? products.value.filter(p => p && p.category !== 'hot') : []);
+        const hotProducts = computed(() => products.value.filter(p => p.category === 'hot'));
+        const regularProducts = computed(() => products.value.filter(p => p.category !== 'hot'));
         const sortedOrders = computed(() => [...orders.value].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
 
+        // 儲存產品至雲端數據庫
         const saveProductsToCloud = () => {
             if(db) db.ref('products').set(products.value);
         };
@@ -367,6 +361,9 @@ createApp({
         const uploadImage = async (event, target) => {
             const file = event.target.files[0];
             if (!file) return;
+            if(cloudinaryCloudName.includes("請在") || cloudinaryUploadPreset.includes("請在")) {
+                alert("❌ 請先填入 Cloudinary 資料！"); return;
+            }
             const targetID = target === 'newProduct' ? 'newProduct' : target.id;
             isUploading.value = targetID;
             const formData = new FormData();
@@ -389,14 +386,12 @@ createApp({
                 if (!form.value.name || !form.value.phone || !form.value.address || !form.value.password) { alert('請填寫所有欄位！'); return; }
                 if(users.value.find(u => u.phone === form.value.phone)) { alert('此電話號碼已被登記！'); return; }
                 
+                // 寫入雲端數據庫
                 if(db) {
                     db.ref('users/' + form.value.phone).set({ ...form.value });
                     currentUser.value = { ...form.value };
                     sessionStorage.setItem('fd_current_user', JSON.stringify(form.value));
                     alert('登記成功並已登入！');
-                } else {
-                    alert('目前處於本地預設模式，註冊模擬成功。');
-                    currentUser.value = { ...form.value };
                 }
             } else {
                 if (!form.value.phone || !form.value.password) { alert('請輸入電話及密碼！'); return; }
@@ -425,7 +420,6 @@ createApp({
         const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
         const submitOrder = () => {
-            if (!currentUser.value) return;
             const now = new Date();
             const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
             const orderId = Date.now();
@@ -436,6 +430,7 @@ createApp({
                 total: cartTotalPrice.value, note: orderNote.value
             };
             
+            // 寫入雲端數據庫
             if(db) db.ref('orders/' + orderId).set(newOrderObj);
 
             let itemText = '';
