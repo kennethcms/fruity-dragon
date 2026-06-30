@@ -638,10 +638,20 @@ createApp({
         };
 
         const deleteProduct = (id) => {
-            if (confirm('確定要永久下架此產品嗎？')) {
-                db.ref('products/' + id).remove().then(() => alert('🗑️ 產品已成功下架。'));
-            }
-        };
+    if (confirm('確定要永久下架此產品嗎？')) {
+        // 1. 先在 Firebase 雲端刪除
+        db.ref('products/' + id).remove()
+            .then(() => {
+                // 2. 🟢 強制在前端 Vue 陣列中即時移除該產品，讓畫面立刻更新！
+                products.value = products.value.filter(p => p && p.id !== id);
+                
+                alert('🗑️ 產品已成功下架並已從列表移除！');
+            })
+            .catch(err => {
+                alert('❌ 刪除失敗: ' + err.message);
+            });
+    }
+};
 
         return {
             authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode,
