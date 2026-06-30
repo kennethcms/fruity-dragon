@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
+    <title>果味龍 Fruity Dragon - 每日新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -521,7 +521,7 @@ createApp({
         };
 
         const handleAdminLogin = () => {
-            if (adminForm.value.username === 'admin' && adminForm.value.password === 'dragon888') {
+            if (adminForm.value.username === 'admin' && adminForm.value.password === 'admin123') {
                 isAdmin.value = true;
                 sessionStorage.setItem('fd_is_admin', 'true');
                 alert('🔑 管理員登入成功！');
