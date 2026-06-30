@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>果味龍 Fruity Dragon - 每日新鮮到貨</title>
+    <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -148,7 +148,12 @@
                                     {{ prod.name }}
                                     <span v-if="prod.description" @click="openDescModal(prod)" style="color: var(--primary-color); font-size: 12px; cursor: pointer; margin-left: 5px; text-decoration: underline;">👁️詳情</span>
                                 </div>
-                                <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
+                                <div class="product-price">
+                                    ${{ prod.price }} / {{ prod.unit || '個' }}
+                                    <div v-if="prod.pairPrice" style="color: var(--hot-color); font-size: 13px; margin-top: 2px; font-weight: bold;">
+                                        🔥 2{{ prod.unit || '個' }}特價 ${{ prod.pairPrice }}
+                                    </div>
+                                </div>
                             </div>
                             <div class="quantity-control">
                                 <button class="qty-btn" @click="removeFromCart(prod)">－</button>
@@ -169,7 +174,12 @@
                                     {{ prod.name }}
                                     <span v-if="prod.description" @click="openDescModal(prod)" style="color: var(--primary-color); font-size: 12px; cursor: pointer; margin-left: 5px; text-decoration: underline;">👁️詳情</span>
                                 </div>
-                                <div class="product-price">${{ prod.price }} / {{ prod.unit || '個' }}</div>
+                                <div class="product-price">
+                                    ${{ prod.price }} / {{ prod.unit || '個' }}
+                                    <div v-if="prod.pairPrice" style="color: var(--hot-color); font-size: 13px; margin-top: 2px; font-weight: bold;">
+                                        🔥 2{{ prod.unit || '個' }}特價 ${{ prod.pairPrice }}
+                                    </div>
+                                </div>
                             </div>
                             <div class="quantity-control">
                                 <button class="qty-btn" @click="removeFromCart(prod)">－</button>
@@ -219,7 +229,11 @@
                 <div v-for="item in cart" :key="item.id" class="cart-item">
                     <div class="cart-item-info">
                         <div class="cart-item-name">{{ item.name }}</div>
-                        <div class="cart-item-price">${{ item.price }} / {{ item.unit || '個' }} (小計: ${{ item.price * item.quantity }})</div>
+                        <div class="cart-item-price">
+                            ${{ item.price }} / {{ item.unit || '個' }} 
+                            <span v-if="item.pairPrice && item.quantity >= 2" style="color:var(--hot-color); font-weight:bold; font-size:12px;">(已套用雙盒特價)</span>
+                            <br>小計: ${{ getItemCalculatedPrice(item) }}
+                        </div>
                     </div>
                     <div class="cart-item-actions">
                         <div class="cart-item-qty-box">
@@ -261,11 +275,11 @@
                 <div class="card" style="background: #f9f9f9; border: 1px solid #ddd;">
                     <h3 style="margin-top:0; color:var(--primary-color);">➕ 新增產品內容</h3>
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name"></div>
-                    
                     <div class="form-group"><label>產品詳情 / 產地介紹</label><textarea v-model="newProduct.description" placeholder="例如：日本頂級空運，甜度爆表，送禮首選！" rows="3"></textarea></div>
                     
                     <div class="form-row" style="margin-bottom: 15px;">
-                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="newProduct.price"></div>
+                        <div class="form-group"><label>單件價錢 ($)</label><input type="number" v-model.number="newProduct.price"></div>
+                        <div class="form-group"><label>買2件總特價 ($) <span style="color:#666; font-size:11px;">(選填)</span></label><input type="number" v-model.number="newProduct.pairPrice" placeholder="例如: 120"></div>
                         <div class="form-group"><label>售賣單位</label><input type="text" v-model="newProduct.unit"></div>
                     </div>
                     <div class="form-group">
@@ -284,11 +298,12 @@
                 <h3>📦 修改現有產品 (自動保存)</h3>
                 
                 <h4 style="color: var(--hot-color);">🔥 今期熱賣列表</h4>
-                <div v-for="prod in products.filter(p => p.category === 'hot')" :key="prod.id" class="card">
+                <div v-for="prod in products.filter(p => p && p.category === 'hot')" :key="prod.id" class="card">
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="prod.name" @change="saveProductsToCloud"></div>
                     <div class="form-group"><label>產品詳情</label><textarea v-model="prod.description" @change="saveProductsToCloud" rows="2"></textarea></div>
                     <div class="form-row" style="margin-bottom: 15px;">
-                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProductsToCloud"></div>
+                        <div class="form-group"><label>單件價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProductsToCloud"></div>
+                        <div class="form-group"><label>買2件總特價 ($)</label><input type="number" v-model.number="prod.pairPrice" @change="saveProductsToCloud" placeholder="無特價請留空"></div>
                         <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" @change="saveProductsToCloud"></div>
                     </div>
                     <div class="form-group" style="background: #fdfdfd; padding: 10px; border: 1px dashed #ccc;">
@@ -300,11 +315,12 @@
                 </div>
 
                 <h4 style="color: var(--primary-color);">🍏 其他正貨列表</h4>
-                <div v-for="prod in products.filter(p => p.category !== 'hot')" :key="prod.id" class="card">
+                <div v-for="prod in products.filter(p => p && p.category !== 'hot')" :key="prod.id" class="card">
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="prod.name" @change="saveProductsToCloud"></div>
                     <div class="form-group"><label>產品詳情</label><textarea v-model="prod.description" @change="saveProductsToCloud" rows="2"></textarea></div>
                     <div class="form-row" style="margin-bottom: 15px;">
-                        <div class="form-group"><label>價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProductsToCloud"></div>
+                        <div class="form-group"><label>單件價錢 ($)</label><input type="number" v-model.number="prod.price" @change="saveProductsToCloud"></div>
+                        <div class="form-group"><label>買2件總特價 ($)</label><input type="number" v-model.number="prod.pairPrice" @change="saveProductsToCloud" placeholder="無特價請留空"></div>
                         <div class="form-group"><label>售賣單位</label><input type="text" v-model="prod.unit" @change="saveProductsToCloud"></div>
                     </div>
                     <div class="form-group" style="background: #fdfdfd; padding: 10px; border: 1px dashed #ccc;">
@@ -382,7 +398,6 @@ createApp({
         const dbLoading = ref(true);
         const viewMode = ref('shop'); 
 
-        // 產品詳情用彈窗變數
         const showDescModal = ref(false);
         const activeProduct = ref(null);
 
@@ -394,7 +409,7 @@ createApp({
         const orderNote = ref('');
         const forgotPhone = ref(''); 
         const isUploading = ref(''); 
-        const newProduct = ref({ name: '', price: '', unit: '個', category: 'regular', image: '', description: '' });
+        const newProduct = ref({ name: '', price: '', pairPrice: '', unit: '個', category: 'regular', image: '', description: '' });
         
         const users = ref([]);
         const products = ref([]);
@@ -403,8 +418,8 @@ createApp({
         let db = null;
 
         const defaultProducts = [
-            { id: 1, name: '菲律賓超甜香蕉', price: 20, unit: '梳', category: 'regular', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300', description: '高地香蕉，口感綿密，天然甜度充足。' },
-            { id: 2, name: '新西蘭珍寶奇異果', price: 68, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300', description: '珍寶巨無霸Size，維他命C爆棚！' }
+            { id: 1, name: '菲律賓超甜香蕉', price: 20, pairPrice: '', unit: '梳', category: 'regular', image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300', description: '高地香蕉，口感綿密，天然甜度充足。' },
+            { id: 2, name: '新西蘭珍寶奇異果', price: 68, pairPrice: 120, unit: '盒', category: 'regular', image: 'https://images.unsplash.com/photo-1585059895524-72359e06133a?w=300', description: '珍寶巨無霸Size，維他命C爆棚！兩盒特價120元。' }
         ];
 
         onMounted(() => {
@@ -472,7 +487,23 @@ createApp({
         });
 
         const cartTotalQuantity = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
-        const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+        
+        // 核心特價計算機邏輯（計算購物車總金額）
+        const cartTotalPrice = computed(() => {
+            return cart.value.reduce((sum, item) => {
+                return sum + getItemCalculatedPrice(item);
+            }, 0);
+        });
+
+        // 計算單個商品在購物車內的總價（處理雙盒特價）
+        const getItemCalculatedPrice = (item) => {
+            if (item.pairPrice && Number(item.pairPrice) > 0) {
+                const pairs = Math.floor(item.quantity / 2);
+                const remainder = item.quantity % 2;
+                return (pairs * Number(item.pairPrice)) + (remainder * Number(item.price));
+            }
+            return item.price * item.quantity;
+        };
 
         const setDateFilter = (mode) => { dateFilterMode.value = mode; };
         const saveProductsToCloud = () => { if(db) db.ref('products').set(products.value); };
@@ -521,11 +552,11 @@ createApp({
         };
 
         const handleAdminLogin = () => {
-            if (adminForm.value.username === 'admin' && adminForm.value.password === 'admin123') {
+            if (adminForm.value.username.trim().toLowerCase() === 'admin' && adminForm.value.password === 'dragon888') {
                 isAdmin.value = true;
                 sessionStorage.setItem('fd_is_admin', 'true');
                 alert('🔑 管理員登入成功！');
-            } else { alert('❌ 管理員帳號或密碼錯誤！'); }
+            } else { alert('❌ 管理員帳號或密碼錯誤！請注意手機輸入是否自動轉了大寫字母。'); }
         };
 
         const logout = () => {
@@ -548,8 +579,18 @@ createApp({
 
         const addToCart = (product) => {
             const item = cart.value.find(c => c.id === product.id);
-            if (item) item.quantity++;
-            else cart.value.push({ id: product.id, name: product.name, price: product.price, unit: product.unit || '個', quantity: 1 });
+            if (item) {
+                item.quantity++;
+            } else {
+                cart.value.push({ 
+                    id: product.id, 
+                    name: product.name, 
+                    price: product.price, 
+                    pairPrice: product.pairPrice || '', 
+                    unit: product.unit || '個', 
+                    quantity: 1 
+                });
+            }
         };
 
         const removeFromCart = (product) => {
@@ -562,7 +603,6 @@ createApp({
 
         const clearItemFromCart = (id) => { cart.value = cart.value.filter(c => c.id !== id); };
 
-        // 詳情頁專用控制方法
         const openDescModal = (product) => {
             activeProduct.value = product;
             showDescModal.value = true;
@@ -591,7 +631,10 @@ createApp({
 
             db.ref('orders/' + orderId).set(orderData).then(() => {
                 let itemDetails = '';
-                cart.value.forEach(item => { itemDetails += `• ${item.name} x ${item.quantity}${item.unit} ($${item.price * item.quantity})\n`; });
+                cart.value.forEach(item => { 
+                    const itemCost = getItemCalculatedPrice(item);
+                    itemDetails += `• ${item.name} x ${item.quantity}${item.unit} (小計: $${itemCost})\n`; 
+                });
 
                 const whatsappMsg = `🍏 *【果味龍 Fruity Dragon】新訂單通知* 🍏\n\n單號：${orderId}\n👤 顧客：${currentUser.value.name}\n📞 電話：${currentUser.value.phone}\n📍 地址：${currentUser.value.address}\n-------------------------\n📦 清單：\n${itemDetails}💰 *總金額：$${cartTotalPrice.value}*\n` + (orderNote.value ? `✍️ 備註：${orderNote.value}` : '');
                 window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
@@ -625,40 +668,39 @@ createApp({
                 id: prodId,
                 name: newProduct.value.name,
                 price: Number(newProduct.value.price),
+                pairPrice: newProduct.value.pairPrice ? Number(newProduct.value.pairPrice) : '', 
                 unit: newProduct.value.unit || '個',
                 category: newProduct.value.category,
                 image: newProduct.value.image || '',
-                description: newProduct.value.description || '' // 連同詳情一同傳送到 Firebase Realtime DB
+                description: newProduct.value.description || '' 
             };
 
             db.ref('products/' + prodId).set(productData).then(() => {
                 alert('🍏 新產品已成功上架！');
-                newProduct.value = { name: '', price: '', unit: '個', category: 'regular', image: '', description: '' };
+                newProduct.value = { name: '', price: '', pairPrice: '', unit: '個', category: 'regular', image: '', description: '' };
             });
         };
 
+        // 🟢 已修正：實時畫面剔除優化，確保按完立刻在後台消失
         const deleteProduct = (id) => {
-    if (confirm('確定要永久下架此產品嗎？')) {
-        // 1. 先在 Firebase 雲端刪除
-        db.ref('products/' + id).remove()
-            .then(() => {
-                // 2. 🟢 強制在前端 Vue 陣列中即時移除該產品，讓畫面立刻更新！
-                products.value = products.value.filter(p => p && p.id !== id);
-                
-                alert('🗑️ 產品已成功下架並已從列表移除！');
-            })
-            .catch(err => {
-                alert('❌ 刪除失敗: ' + err.message);
-            });
-    }
-};
+            if (confirm('確定要永久下架此產品嗎？')) {
+                db.ref('products/' + id).remove()
+                    .then(() => {
+                        products.value = products.value.filter(p => p && p.id !== id);
+                        alert('🗑️ 產品已成功下架並已從列表移除！');
+                    })
+                    .catch(err => {
+                        alert('❌ 刪除失敗: ' + err.message);
+                    });
+            }
+        };
 
         return {
             authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode,
             showDescModal, activeProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct,
             products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice,
             setDateFilter, saveProductsToCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath,
-            getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, submitOrder, cancelOrder, exportOrderToWhatsApp, addProduct, deleteProduct
+            getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, submitOrder, cancelOrder, exportOrderToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
         };
     }
 }).mount('#app');
