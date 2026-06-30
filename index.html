@@ -629,7 +629,7 @@ createApp({
             window.open(`https://wa.me/${merchantPhone}?text=${text}`, '_blank');
         };
 
-        // ======================== 🟢 訂單處理與 WhatsApp 串接 ========================
+        // ======================== 🟢 訂單處理與 WhatsApp 串接 (核心安全優化) ========================
         const getFormatDate = () => {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -653,6 +653,12 @@ createApp({
                 status: 'pending'
             };
 
+            // 🚀 【核心優化】點擊瞬間立刻開啟空白分頁，保證瀏覽器不會攔截
+            const whatsappWindow = window.open('', '_blank');
+            if (whatsappWindow) {
+                whatsappWindow.document.write('<p style="font-family:sans-serif; text-align:center; margin-top:50px; color:#666;">⏳ 正在安全同步雲端訂單，請稍後...</p>');
+            }
+
             db.ref('orders/' + orderId).set(orderData, (err) => {
                 if (!err) {
                     let msg = `🍎【果味龍 Fruity Dragon】新訂單通知 🐉\n`;
@@ -674,14 +680,20 @@ createApp({
                     msg += `💰 總金額: $${cartTotalPrice.value}\n`;
                     if (orderNote.value) msg += `✍️ 備註: ${orderNote.value}\n`;
                     
-                    alert('訂單已同步至雲端系統！即將跳轉到 WhatsApp 發送給店主確認發貨。');
-                    
+                    // 重設本地購物車資料
                     cart.value = [];
                     orderNote.value = '';
                     showCartModal.value = false;
 
-                    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                    // 🟢 數據儲存完畢，直接變更剛才的分頁網址至 WhatsApp 連結
+                    const targetUrl = `https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`;
+                    if (whatsappWindow) {
+                        whatsappWindow.location.href = targetUrl;
+                    } else {
+                        window.location.href = targetUrl;
+                    }
                 } else {
+                    if (whatsappWindow) whatsappWindow.close();
                     alert('網絡繁忙，儲存訂單失敗，請稍後再試！');
                 }
             });
@@ -689,10 +701,19 @@ createApp({
 
         const cancelOrder = (ord) => {
             if (confirm('確定要取消此訂單嗎？')) {
+                // 🚀 點擊瞬間開啟新視窗
+                const whatsappWindow = window.open('', '_blank');
+
                 db.ref('orders/' + ord.id + '/status').set('canceled', (err) => {
                     if (!err) {
                         const msg = `🚨【取消訂單通知】\n店主你好，我想取消以下訂單：\n訂單編號: ${ord.id}\n顧客: ${ord.customerName} (${ord.customerPhone})`;
-                        window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                        const targetUrl = `https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`;
+                        
+                        if (whatsappWindow) whatsappWindow.location.href = targetUrl;
+                        else window.location.href = targetUrl;
+                    } else {
+                        if (whatsappWindow) whatsappWindow.close();
+                        alert('網絡同步錯誤，取消失敗');
                     }
                 });
             }
@@ -710,6 +731,7 @@ createApp({
             msg += `應收總額: $${ord.total}\n`;
             if (ord.note) msg += `備註: ${ord.note}\n`;
             
+            // 此功能不經過非同步雲端儲存，直接開啟安全分頁
             window.open(`https://wa.me/${ord.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
