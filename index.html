@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>果味龍 Fruity Dragon - 水果送貨服務</title>
+    <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -116,7 +116,7 @@
                 <h2>{{ authMode === 'login' ? '會員登入' : '新會員登記' }}</h2>
                 <div class="form-group" v-if="authMode === 'register'"><label>姓名</label><input type="text" v-model="form.name" placeholder="請輸入姓名"></div>
                 <div class="form-group"><label>電話號碼<span class="required-star" v-if="authMode === 'register'">* (必填)</span></label><input type="tel" v-model="form.phone" placeholder="例如: 91234567" required></div>
-                <div class="form-group" v-if="authMode === 'register'"><label>送餐地址 (請以中文填寫)<span class="required-star">* (必填)</span></label><textarea v-model="form.address" placeholder="請以中文填寫完整送貨地址" required></textarea></div>
+                <div class="form-group" v-if="authMode === 'register'"><label>送餐地址 (請以中文填寫)<span class="required-star">* (必填)</span></label><textarea v-model="form.address" placeholder="請以中文填寫簡單地址即可, 如果味龍大廈16C" required></textarea></div>
                 <div class="form-group"><label>密碼</label><input type="password" v-model="form.password" placeholder="請輸入密碼"><div v-if="authMode === 'login'" class="forgot-link" @click="authMode = 'forgot'">忘記密碼？</div></div>
                 <button @click="handleAuth" :disabled="dbLoading">{{ authMode === 'login' ? '立即登入' : '完成登記並登入' }}</button>
                 <div class="switch-link" @click="authMode = (authMode === 'login' ? 'register' : 'login')">{{ authMode === 'login' ? '未有帳戶？按此登記新會員' : '已有帳戶？按此登入' }}</div>
