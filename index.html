@@ -119,7 +119,6 @@
     </div>
 
     <div class="container">
-        <!-- 登入註冊卡片 -->
         <div v-if="!currentUser && !isAdmin">
             <div class="card" v-if="authMode === 'login' || authMode === 'register'">
                 <h2>{{ authMode === 'login' ? '會員登入' : '新會員登記' }}</h2>
@@ -149,12 +148,11 @@
             </div>
         </div>
 
-        <!-- 前台水果店 -->
         <div v-if="currentUser && !isAdmin">
             <div v-if="viewMode === 'shop'">
                 <div class="section-title hot">🔥 今期熱賣🔥<span>HOT</span></div>
                 <div class="product-list">
-                    <div class="product-item hot-border" v-for="prod in hotProducts" :key="prod.id">
+                    <div class="product-item hot-border" v-for="prod in hotProducts" :key="'shop-hot-' + prod.id">
                         <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img" @click="openZoomLightbox(prod)">
                         <div class="product-info">
                             <div>
@@ -180,7 +178,7 @@
 
                 <div class="section-title">🍏 其他正貨<span>REGULAR</span></div>
                 <div class="product-list">
-                    <div class="product-item" v-for="prod in regularProducts" :key="prod.id">
+                    <div class="product-item" v-for="prod in regularProducts" :key="'shop-reg-' + prod.id">
                         <img :src="prod.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=300'" class="product-img" @click="openZoomLightbox(prod)">
                         <div class="product-info">
                             <div>
@@ -209,7 +207,6 @@
                 </div>
             </div>
 
-            <!-- 歷史購買紀錄 -->
             <div v-if="viewMode === 'history'">
                 <h2>📋 您的歷史購買紀錄</h2>
                 <div v-if="myOrders.length === 0" style="text-align:center; padding: 40px; color: #999;">您暫時未有任何落單紀錄 🍇</div>
@@ -235,7 +232,6 @@
             </div>
         </div>
 
-        <!-- 購物車 Modal -->
         <div class="modal" v-if="showCartModal && currentUser">
             <div class="modal-content">
                 <div class="close-modal" @click="showCartModal = false">✕ 關閉</div>
@@ -267,7 +263,6 @@
             </div>
         </div>
 
-        <!-- 詳情 Modal -->
         <div class="modal" v-if="showDescModal && activeProduct">
             <div class="modal-content" style="max-height: 60%; border-radius: 20px 20px 20px 20px; margin: auto 15px; bottom: auto; top: 20%;">
                 <div class="close-modal" @click="showDescModal = false">✕ 關閉</div>
@@ -284,13 +279,11 @@
             </div>
         </div>
 
-        <!-- 大圖燈箱 -->
         <div class="zoom-lightbox" v-if="showZoomLightbox && zoomProduct" @click="closeZoomLightbox">
             <img :src="zoomProduct.image || 'https://images.unsplash.com/photo-1610832958506-ee56336191d1?w=600'" class="zoom-lightbox-img">
             <div class="zoom-lightbox-title">{{ zoomProduct.name }} (點擊任何地方關閉)</div>
         </div>
 
-        <!-- 管理員後台 -->
         <div v-if="isAdmin">
             <div class="tab-group">
                 <button class="tab-btn" :class="{active: adminTab === 'products'}" @click="adminTab = 'products'">📦 產品管理</button>
@@ -298,7 +291,6 @@
             </div>
 
             <div v-if="adminTab === 'products'">
-                <!-- 修改密碼面版 -->
                 <div class="card" style="background: #edf4fe; border: 1px solid #b3d4fc;">
                     <h3 style="margin-top:0; color:#1a73e8;">👤 會員帳戶及密碼管理中心</h3>
                     <div class="form-group">
@@ -321,7 +313,6 @@
                     </div>
                 </div>
 
-                <!-- 新增產品 -->
                 <div class="card" style="background: #f9f9f9; border: 1px solid #ddd;">
                     <h3 style="margin-top:0; color:var(--primary-color);">➕ 新增產品內容</h3>
                     <div class="form-group"><label>產品名稱</label><input type="text" v-model="newProduct.name"></div>
@@ -343,10 +334,9 @@
                     <button @click="addProduct" :disabled="isUploading !== '' || dbLoading" style="margin-top: 15px;">確認新增並上架</button>
                 </div>
 
-                <h3>📦 修改現有產品 (任何變動在移開輸入框時將自動化保存)</h3>
-                <!-- 修正點 1 & 2：使用產品唯一 key 作為 ID 綁定，完全防止重複；加入 @blur 實現全面自動保存 -->
-                <div v-for="prod in products" :key="prod.id" class="card">
-                    <span class="auto-save-badge">🔄 移開即自動儲存</span>
+                <h3>📦 修改現有產品 (移開輸入框或改選項時將自動保存)</h3>
+                <div v-for="prod in products" :key="'admin-prod-' + prod.id" class="card">
+                    <span class="auto-save-badge">🔄 自動化儲存中</span>
                     <div class="form-group">
                         <label>產品名稱 ({{ prod.category === 'hot' ? '🔥 熱賣' : '🍏 正貨' }})</label>
                         <input type="text" v-model="prod.name" @blur="updateProductInCloud(prod)">
@@ -378,7 +368,6 @@
                 </div>
             </div>
 
-            <!-- 後台訂單管理 -->
             <div v-if="adminTab === 'orders'">
                 <h3>📋 雲端訂單紀錄中心</h3>
                 <div class="filter-group">
@@ -388,7 +377,6 @@
                     <button class="filter-btn" :class="{active: dateFilterMode === 'all'}" @click="setDateFilter('all')">顯示全部</button>
                     <input type="date" class="date-input" v-model="customFilterDate" @change="setDateFilter('custom')">
                     
-                    <!-- 修正點 3：一鍵發送當前所有篩選時期的訂單 -->
                     <button class="bulk-whatsapp-btn" @click="sendBulkOrdersToWhatsApp">
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
                     </button>
@@ -449,21 +437,30 @@ createApp({
             if (!firebase.apps.length) firebase.initializeApp({ databaseURL: firebaseDatabaseURL });
             db = firebase.database();
             
-            // 修正點 1：徹底對齊唯一的數據 key 機制
             productsRef = db.ref('products');
             productsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
+                
+                // 【終極修復邏輯】：每次雲端資料更新時，先將本地的陣列清空，再全新放入
+                // 這能確保 Vue 的響應式追蹤不會拿到舊快取，杜絕影子重複產品的產生
+                const freshList = [];
                 if (data) {
-                    const list = [];
                     Object.keys(data).forEach(key => {
-                        if (data[key]) {
-                            list.push({ id: key, ...data[key] });
+                        if (data[key] !== null && data[key] !== undefined) {
+                            freshList.push({
+                                id: key,
+                                name: data[key].name || '',
+                                price: Number(data[key].price) || 0,
+                                pairPrice: data[key].pairPrice ? Number(data[key].pairPrice) : '',
+                                unit: data[key].unit || '個',
+                                category: data[key].category || 'regular',
+                                image: data[key].image || '',
+                                description: data[key].description || ''
+                            });
                         }
                     });
-                    products.value = list;
-                } else {
-                    products.value = [];
                 }
+                products.value = freshList;
                 dbLoading.value = false;
             });
             
@@ -508,7 +505,7 @@ createApp({
 
         const setDateFilter = (mode) => { dateFilterMode.value = mode; };
         
-        // 修正點 2：直接儲存物件到其對應的對齊節點，不觸發全表更新
+        // 唯一定向同步，絕不污染其他節點
         const updateProductInCloud = (prod) => { 
             if(db && prod.id) {
                 db.ref(`products/${prod.id}`).set({
@@ -614,7 +611,6 @@ createApp({
             window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(deliveryMsg)}`, '_blank'); 
         };
 
-        // 修正點 3：批次打包目前選擇時期的所有訂單並發送到 WhatsApp
         const sendBulkOrdersToWhatsApp = () => {
             const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
             if (activeOrders.length === 0) {
@@ -650,7 +646,7 @@ createApp({
 
         const addProduct = () => {
             if (!newProduct.value.name || !newProduct.value.price) { alert('請填寫產品名稱及價錢！'); return; }
-            const newRef = db.ref('products').push(); // 使用 Firebase 自動生成的唯一 Key 作為節點
+            const newRef = db.ref('products').push(); 
             const prodId = newRef.key;
             
             newRef.set({ 
