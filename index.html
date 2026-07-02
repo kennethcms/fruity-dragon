@@ -441,26 +441,49 @@ createApp({
             productsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 
-                // 【終極修復邏輯】：每次雲端資料更新時，先將本地的陣列清空，再全新放入
-                // 這能確保 Vue 的響應式追蹤不會拿到舊快取，杜絕影子重複產品的產生
-                const freshList = [];
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        if (data[key] !== null && data[key] !== undefined) {
-                            freshList.push({
-                                id: key,
-                                name: data[key].name || '',
-                                price: Number(data[key].price) || 0,
-                                pairPrice: data[key].pairPrice ? Number(data[key].pairPrice) : '',
-                                unit: data[key].unit || '個',
-                                category: data[key].category || 'regular',
-                                image: data[key].image || '',
-                                description: data[key].description || ''
-                            });
-                        }
-                    });
+                if (!data) {
+                    products.value = [];
+                    dbLoading.value = false;
+                    return;
                 }
-                products.value = freshList;
+
+                const cloudKeys = Object.keys(data);
+
+                // 【核心修正：就地比對增量更新法 (In-place Map)】
+                // 1. 先把雲端已經被刪除的產品從本地過濾掉（防止誤刪連鎖 Bug）
+                products.value = products.value.filter(p => cloudKeys.includes(p.id));
+
+                // 2. 遍歷雲端數據，就地更新本地屬性（不破壞 Vue 物件參考，絕對不會重複渲染）
+                cloudKeys.forEach(key => {
+                    const cloudItem = data[key];
+                    if (!cloudItem) return;
+
+                    const localItem = products.value.find(p => p.id === key);
+
+                    if (localItem) {
+                        // 如果本地已有這個產品，只在非焦點操作時同步（或者直接 assign 屬性），確保打字時不重繪 DOM
+                        localItem.name = cloudItem.name || '';
+                        localItem.price = Number(cloudItem.price) || 0;
+                        localItem.pairPrice = cloudItem.pairPrice ? Number(cloudItem.pairPrice) : '';
+                        localItem.unit = cloudItem.unit || '個';
+                        localItem.category = cloudItem.category || 'regular';
+                        localItem.image = cloudItem.image || '';
+                        localItem.description = cloudItem.description || '';
+                    } else {
+                        // 如果是全新的產品，才 push 進去
+                        products.value.push({
+                            id: key,
+                            name: cloudItem.name || '',
+                            price: Number(cloudItem.price) || 0,
+                            pairPrice: cloudItem.pairPrice ? Number(cloudItem.pairPrice) : '',
+                            unit: cloudItem.unit || '個',
+                            category: cloudItem.category || 'regular',
+                            image: cloudItem.image || '',
+                            description: cloudItem.description || ''
+                        });
+                    }
+                });
+
                 dbLoading.value = false;
             });
             
@@ -505,7 +528,7 @@ createApp({
 
         const setDateFilter = (mode) => { dateFilterMode.value = mode; };
         
-        // 唯一定向同步，絕不污染其他節點
+        // 唯一定向同步到指定雲端節點
         const updateProductInCloud = (prod) => { 
             if(db && prod.id) {
                 db.ref(`products/${prod.id}`).set({
@@ -593,7 +616,7 @@ createApp({
 
         const submitOrder = () => {
             const now = new Date(); const orderId = 'ORD-' + now.getTime();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
             const orderData = { id: orderId, timestamp: now.toISOString(), date: dateStr, customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address, items: cart.value, total: cartTotalPrice.value, note: orderNote.value, status: 'pending' };
             
             db.ref('orders/' + orderId).set(orderData).then(() => {
@@ -647,7 +670,6 @@ createApp({
         const addProduct = () => {
             if (!newProduct.value.name || !newProduct.value.price) { alert('請填寫產品名稱及價錢！'); return; }
             const newRef = db.ref('products').push(); 
-            const prodId = newRef.key;
             
             newRef.set({ 
                 name: newProduct.value.name.trim(), 
