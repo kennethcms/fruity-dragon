@@ -378,6 +378,8 @@
                     
                     <button class="bulk-whatsapp-btn" @click="sendBulkOrdersToWhatsApp">
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
+                        <button @click="generatePackingReport" class="btn-packing">
+        📦 發送彙整執貨單 (WhatsApp)
                     </button>
                 </div>
 
