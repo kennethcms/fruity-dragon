@@ -614,17 +614,38 @@ createApp({
         const openZoomLightbox = (p) => { zoomProduct.value = p; showZoomLightbox.value = true; };
         const closeZoomLightbox = () => { showZoomLightbox.value = false; };
 
-        const submitOrder = () => {
-            const now = new Date(); const orderId = 'ORD-' + now.getTime();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
-            const orderData = { id: orderId, timestamp: now.toISOString(), date: dateStr, customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address, items: cart.value, total: cartTotalPrice.value, note: orderNote.value, status: 'pending' };
-            
-            db.ref('orders/' + orderId).set(orderData).then(() => {
-                let details = ''; cart.value.forEach(i => { details += `• ${i.name} x ${i.quantity} ($${getItemCalculatedPrice(i)})\n`; });
-                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent('新訂單:\n'+details+'總額: $'+cartTotalPrice.value)}`, '_blank');
-                cart.value = []; showCartModal.value = false; viewMode.value = 'history';
-            });
-        };
+const submitOrder = () => {
+    // 確保這裡抓到的是當前登入的用戶資訊
+    const orderData = {
+        customerName: currentUser.value.name,
+        customerPhone: currentUser.value.phone,
+        address: currentUser.value.address,
+        items: cart.value,
+        total: cartTotalPrice.value,
+        date: new Date().toISOString().split('T')[0], // 格式化為 YYYY-MM-DD
+        status: 'pending',
+        note: orderNote.value
+    };
+    
+    // 寫入 Firebase
+    const newOrderRef = db.ref('orders').push();
+    newOrderRef.set(orderData);
+    
+    // 修改後的 WhatsApp 訊息內容
+    let msg = `🛒 新訂單通知%0A%0A`;
+    msg += `👤 姓名: ${orderData.customerName}%0A`;
+    msg += `📞 電話: ${orderData.customerPhone}%0A`;
+    msg += `📍 地址: ${orderData.address}%0A`;
+    msg += `-----------------%0A`;
+    cart.value.forEach(i => { msg += `${i.name} x ${i.quantity}${i.unit || '個'}%0A`; });
+    msg += `-----------------%0A`;
+    msg += `💰 總額: $${orderData.total}`;
+    
+    window.open(`https://wa.me/${merchantPhone}?text=${msg}`);
+    
+    cart.value = [];
+    showCartModal.value = false;
+};
 
         const cancelOrder = (order) => { db.ref(`orders/${order.id}/status`).set('canceled'); };
         const exportOrderToWhatsApp = (order) => { 
