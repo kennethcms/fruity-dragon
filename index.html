@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -381,11 +381,7 @@
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
                     </button>
                 </div>
-<div class="filter-group">
-    <button class="filter-btn" @click="generatePackingReport" style="background: #1976D2; color: white;">
-        📊 匯出當前日期執貨表 (CSV)
-    </button>
-</div>
+
                 <div v-for="ord in filteredOrders" :key="ord.id" class="order-card" :style="ord.status === 'canceled' ? 'opacity: 0.6;' : ''">
                     <div class="order-header">
                         <span>📅 {{ ord.date }}</span>
@@ -618,45 +614,15 @@ createApp({
         const openZoomLightbox = (p) => { zoomProduct.value = p; showZoomLightbox.value = true; };
         const closeZoomLightbox = () => { showZoomLightbox.value = false; };
 
-const submitOrder = () => {
-            const now = new Date(); 
-            const orderId = 'ORD-' + now.getTime();
-            // 確保日期格式與後台篩選一致
-            const dateStr = now.toISOString().split('T')[0]; 
-            
-            const orderData = { 
-                id: orderId, 
-                timestamp: now.toISOString(), 
-                date: dateStr, 
-                customerName: currentUser.value.name, 
-                customerPhone: currentUser.value.phone, 
-                address: currentUser.value.address, 
-                items: cart.value, 
-                total: cartTotalPrice.value, 
-                note: orderNote.value, 
-                status: 'pending' 
-            };
+        const submitOrder = () => {
+            const now = new Date(); const orderId = 'ORD-' + now.getTime();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
+            const orderData = { id: orderId, timestamp: now.toISOString(), date: dateStr, customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address, items: cart.value, total: cartTotalPrice.value, note: orderNote.value, status: 'pending' };
             
             db.ref('orders/' + orderId).set(orderData).then(() => {
-                // 優化後的 WhatsApp 訊息，手機點擊會自動轉跳
-                let msg = `🛒 *新訂單通知*\n\n`;
-                msg += `👤 客戶: ${currentUser.value.name}\n`;
-                msg += `📞 電話: ${currentUser.value.phone}\n`;
-                msg += `📍 地址: ${currentUser.value.address}\n`;
-                msg += `--------------------------\n`;
-                cart.value.forEach(i => { 
-                    msg += `• ${i.name} x ${i.quantity}${i.unit || '個'}\n`; 
-                });
-                msg += `--------------------------\n`;
-                msg += `💰 總額: $${cartTotalPrice.value}\n`;
-                if (orderNote.value) msg += `✍️ 備註: ${orderNote.value}`;
-                
-                // 使用 encodeURIComponent 確保換行與特殊符號在手機 WhatsApp 中正常顯示
-                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-                
-                cart.value = []; 
-                showCartModal.value = false; 
-                viewMode.value = 'history';
+                let details = ''; cart.value.forEach(i => { details += `• ${i.name} x ${i.quantity} ($${getItemCalculatedPrice(i)})\n`; });
+                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent('新訂單:\n'+details+'總額: $'+cartTotalPrice.value)}`, '_blank');
+                cart.value = []; showCartModal.value = false; viewMode.value = 'history';
             });
         };
 
@@ -727,80 +693,9 @@ const submitOrder = () => {
                 }); 
             }
         };
-       const generatePackingReport = () => {
-    // 1. 篩選該日所有有效訂單
-    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
-    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-
-    if (dailyOrders.length === 0) {
-        alert('該日期沒有任何有效訂單！');
-        return;
-    }
-const generatePackingReport = () => {
-            // 獲取當前選定的日期
-            const targetDate = customFilterDate.value;
-            if (!targetDate) {
-                alert('請先選擇日期！');
-                return;
-            }
-
-    // 2. 彙整產品總量
-    const summary = {};
-    dailyOrders.forEach(o => {
-        o.items.forEach(item => {
-            if (!summary[item.name]) {
-                summary[item.name] = { total: 0, unit: item.unit || '個' };
-            // 篩選該日所有訂單
-            const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-            
-            if (dailyOrders.length === 0) {
-                alert('該日期沒有任何訂單記錄！');
-                return;
-            }
-            summary[item.name].total += item.quantity;
-        });
-    });
-
-    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
-    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
-    msg += `📦 產品彙整:\n`;
-    msg += `--------------------------\n`;
-    
-    for (const name in summary) {
-        msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
-    }
-    
-    msg += `--------------------------\n`;
-    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
-            // 彙整產品總數
-            const summary = {};
-            dailyOrders.forEach(o => {
-                o.items.forEach(item => {
-                    if (!summary[item.name]) {
-                        summary[item.name] = { total: 0, unit: item.unit || '個' };
-                    }
-                    summary[item.name].total += item.quantity;
-                });
-            });
-
-    // 4. 發送至 WhatsApp
-    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-};
-            // 生成 WhatsApp 訊息內容
-            let msg = `📦 *【果味龍 - ${targetDate} 執貨總單】*\n\n`;
-            for (const name in summary) {
-                msg += `• ${name} : ${summary[name].total}${summary[name].unit}\n`;
-            }
-            msg += `\n共 ${dailyOrders.length} 筆訂單，請查收。`;
-
-            // 一鍵跳轉 WhatsApp
-            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-        };
-
 
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
-    generatePackingReport 
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
         };
     }
 }).mount('#app');
