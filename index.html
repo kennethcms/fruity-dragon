@@ -729,34 +729,41 @@ const submitOrder = () => {
             }
         };
        const generatePackingReport = () => {
-            // 抓取當前篩選日期或預設今日
-            const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
-            const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-            
-            // 彙整所有訂單的產品總量
-            const summary = {};
-            dailyOrders.forEach(o => {
-                o.items.forEach(item => {
-                    if (!summary[item.name]) {
-                        summary[item.name] = { total: 0, unit: item.unit || '個' };
-                    }
-                    summary[item.name].total += item.quantity;
-                });
-            });
+    // 1. 篩選該日所有有效訂單
+    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
+    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
 
-            // 生成 CSV 內容
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF產品名稱,總數量,單位\n";
-            for (const name in summary) {
-                csvContent += `${name},${summary[name].total},${summary[name].unit}\n`;
+    if (dailyOrders.length === 0) {
+        alert('該日期沒有任何有效訂單！');
+        return;
+    }
+
+    // 2. 彙整產品總量
+    const summary = {};
+    dailyOrders.forEach(o => {
+        o.items.forEach(item => {
+            if (!summary[item.name]) {
+                summary[item.name] = { total: 0, unit: item.unit || '個' };
             }
+            summary[item.name].total += item.quantity;
+        });
+    });
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `執貨總表_${targetDate}.csv`);
-            document.body.appendChild(link);
-            link.click();
-        };
+    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
+    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
+    msg += `📦 產品彙整:\n`;
+    msg += `--------------------------\n`;
+    
+    for (const name in summary) {
+        msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
+    }
+    
+    msg += `--------------------------\n`;
+    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
+
+    // 4. 發送至 WhatsApp
+    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+};
     
 
         return {
