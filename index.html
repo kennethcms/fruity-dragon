@@ -692,9 +692,7 @@ createApp({
                 }); 
             }
         };
-const getFormatDate = (date) => date.toISOString().split('T')[0];
-
-        // --- 修改後：與篩選器完全連動的執貨單傳送 ---
+        
         const sendPackingReportToWhatsApp = () => {
             const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
             
