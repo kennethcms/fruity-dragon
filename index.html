@@ -692,98 +692,44 @@ createApp({
                 }); 
             }
         };
-        
-<!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>果味龍 Fruity Dragon - 系統管理</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <style>
-        /* ... 保留您原有的 CSS，確保按鈕樣式正常顯示 ... */
-        .admin-controls { background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .action-btn { background: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; }
-    </style>
-</head>
-<body>
+        // --- 修改後：一鍵發送當日執貨清單至 WhatsApp ---
+const generatePackingReport = () => {
+    // 1. 篩選該日所有有效訂單
+    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
+    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
 
-<div id="app">
-    <div class="admin-controls" v-if="isAdmin && adminTab === 'orders'">
-        <button class="action-btn" @click="sendPackingReportToWhatsApp">
-            📦 發送當前篩選範圍執貨單 (WhatsApp)
-        </button>
-    </div>
-</div>
+    if (dailyOrders.length === 0) {
+        alert('該日期沒有任何有效訂單！');
+        return;
+    }
 
-<script>
-const { createApp, ref, computed, onMounted } = Vue;
-
-createApp({
-    setup() {
-        const merchantPhone = "85260980504";
-        const customFilterDate = ref(new Date().toISOString().split('T')[0]);
-        const dateFilterMode = ref('today');
-        const orders = ref([]);
-        const currentUser = ref(null);
-        const cart = ref([]);
-        const cartTotalPrice = ref(0);
-        const orderNote = ref('');
-        const showCartModal = ref(false);
-        const viewMode = ref('shop');
-
-        // --- 核心修正：統一日期篩選邏輯 ---
-        const filteredOrders = computed(() => {
-            const now = new Date();
-            const getStr = (d) => d.toISOString().split('T')[0];
-            const todayStr = getStr(now);
-            const yesterday = new Date(now);
-            yesterday.setDate(now.getDate() - 1);
-            const yesterdayStr = getStr(yesterday);
-
-            return orders.value.filter(ord => {
-                if (!ord.date) return false;
-                if (dateFilterMode.value === 'today') return ord.date === todayStr;
-                if (dateFilterMode.value === 'yesterday') return ord.date === yesterdayStr;
-                if (dateFilterMode.value === 'custom') return ord.date === customFilterDate.value;
-                return true;
-            });
+    // 2. 彙整產品總量
+    const summary = {};
+    dailyOrders.forEach(o => {
+        o.items.forEach(item => {
+            if (!summary[item.name]) {
+                summary[item.name] = { total: 0, unit: item.unit || '個' };
+            }
+            summary[item.name].total += item.quantity;
         });
+    });
 
-        // --- 完美執貨單功能：彙整並傳送 ---
-        const sendPackingReportToWhatsApp = () => {
-            const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
-            
-            if (activeOrders.length === 0) {
-                alert('當前日期範圍沒有任何有效訂單！');
-                return;
-            }
+    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
+    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
+    msg += `📦 產品彙整:\n`;
+    msg += `--------------------------\n`;
+    
+    for (const name in summary) {
+        msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
+    }
+    
+    msg += `--------------------------\n`;
+    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
 
-            const summary = {};
-            activeOrders.forEach(o => {
-                if (o.items) {
-                    o.items.forEach(item => {
-                        if (!summary[item.name]) {
-                            summary[item.name] = { total: 0, unit: item.unit || '個' };
-                        }
-                        summary[item.name].total += Number(item.quantity);
-                    });
-                }
-            });
+    // 4. 發送至 WhatsApp
+    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+};
 
-            let msg = `📦 *【果味龍 - 執貨總表】*\n`;
-            msg += `日期範圍: ${dateFilterMode.value === 'custom' ? customFilterDate.value : dateFilterMode.value}\n`;
-            msg += `總計訂單: ${activeOrders.length} 筆\n`;
-            msg += `--------------------------\n`;
-            for (const name in summary) {
-                msg += `• ${name} : ${summary[name].total} ${summary[name].unit}\n`;
-            }
-            msg += `--------------------------\n請盡快安排執貨！`;
-
-            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-        };
         return {
             authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
 
