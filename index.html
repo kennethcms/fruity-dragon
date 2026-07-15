@@ -694,47 +694,59 @@ createApp({
         };
         // --- 修改後：一鍵發送當日執貨清單至 WhatsApp ---
 const generatePackingReport = () => {
-    // 1. 篩選該日所有有效訂單
-    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
-    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-
-    if (dailyOrders.length === 0) {
-        alert('該日期沒有任何有效訂單！');
+    // 改用 filteredOrders.value，這樣無論你選了「今日、昨日、本月或指定日期」，
+    // 匯出的結果都會是你畫面上看到的那個範圍的訂單總和。
+    const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
+    
+    if (activeOrders.length === 0) {
+        alert('當前篩選條件下沒有有效訂單！');
         return;
     }
 
-    // 2. 彙整產品總量
     const summary = {};
-    dailyOrders.forEach(o => {
-        o.items.forEach(item => {
-            if (!summary[item.name]) {
-                summary[item.name] = { total: 0, unit: item.unit || '個' };
-            }
-            summary[item.name].total += item.quantity;
-        });
+    activeOrders.forEach(o => {
+        if (o.items) {
+            o.items.forEach(item => {
+                // 確保 qty 是數字，避免加總錯誤
+                const qty = Number(item.quantity) || 0;
+                if (!summary[item.name]) {
+                    summary[item.name] = { total: 0, unit: item.unit || '個' };
+                }
+                summary[item.name].total += qty;
+            });
+        }
     });
 
-    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
-    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
-    msg += `📦 產品彙整:\n`;
+    // 建立 WhatsApp 訊息
+    let msg = `📦 *【果味龍 - 執貨總清單】*\n`;
+    msg += `篩選模式: ${dateFilterMode.value}\n`;
+    msg += `總計訂單: ${activeOrders.length} 筆\n`;
     msg += `--------------------------\n`;
     
     for (const name in summary) {
         msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
     }
     
-    msg += `--------------------------\n`;
-    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
+    msg += `--------------------------\n請即時安排執貨，謝謝！`;
 
-    // 4. 發送至 WhatsApp
+    // 發送
     window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
-        return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
-
-    generatePackingReport 
-        };
+// --- 請務必更新你的 return 部分 ---
+return {
+    authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, 
+    showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, 
+    customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, 
+    newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, 
+    orders, hotProducts, regularProducts, myOrders, filteredOrders, 
+    cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, 
+    uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, 
+    searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, 
+    clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, 
+    closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, 
+    sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice,
+    generatePackingReport
     }
 }).mount('#app');
 </script>
