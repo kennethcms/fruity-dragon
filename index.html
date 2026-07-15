@@ -411,26 +411,6 @@ createApp({
         const cloudinaryCloudName = "dcrglmacm"; 
         const cloudinaryUploadPreset = "nl3juyq6"; 
         const firebaseDatabaseURL = "https://fruity-dragon-de6b3-default-rtdb.firebaseio.com/"; 
-const getFormatDate = (d) => d.toISOString().split('T')[0];
-
-        const filteredOrders = computed(() => {
-            const now = new Date();
-            const todayStr = getFormatDate(now);
-            const yesterday = new Date(now);
-            yesterday.setDate(now.getDate() - 1);
-            const yesterdayStr = getFormatDate(yesterday);
-
-            return orders.value.filter(ord => {
-                if (!ord.date) return false;
-                // 處理篩選模式
-                if (dateFilterMode.value === 'today') return ord.date === todayStr;
-                if (dateFilterMode.value === 'yesterday') return ord.date === yesterdayStr;
-                if (dateFilterMode.value === 'month') return ord.date.startsWith(todayStr.substring(0, 7));
-                if (dateFilterMode.value === 'custom') return ord.date === customFilterDate.value;
-                return true;
-            });
-        });
-        
 
         const authMode = ref('login'); const currentUser = ref(null); const isAdmin = ref(false);
         const showCartModal = ref(false); const adminTab = ref('products'); const dbLoading = ref(true); const viewMode = ref('shop');
