@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
+    <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -378,8 +379,6 @@
                     
                     <button class="bulk-whatsapp-btn" @click="sendBulkOrdersToWhatsApp">
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
-                        <button @click="generatePackingReport" class="btn-packing">
-        📦 發送彙整執貨單 (WhatsApp)
                     </button>
                 </div>
 
@@ -409,18 +408,16 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        // --- 設定區 ---
         const merchantPhone = "85260980504"; 
         const cloudinaryCloudName = "dcrglmacm"; 
         const cloudinaryUploadPreset = "nl3juyq6"; 
         const firebaseDatabaseURL = "https://fruity-dragon-de6b3-default-rtdb.firebaseio.com/"; 
 
-        // --- 變數定義 ---
         const authMode = ref('login'); const currentUser = ref(null); const isAdmin = ref(false);
         const showCartModal = ref(false); const adminTab = ref('products'); const dbLoading = ref(true); const viewMode = ref('shop');
         const showDescModal = ref(false); const activeProduct = ref(null); const showZoomLightbox = ref(false); const zoomProduct = ref(null);
         const searchUserPhone = ref(''); const foundUser = ref(null); const newPasswordForUser = ref('');
-        const dateFilterMode = ref('today'); const customFilterDate = ref(new Date().toISOString().split('T')[0]);
+        const dateFilterMode = ref('today'); const customFilterDate = ref('');
         const form = ref({ name: '', phone: '', address: '', password: '' }); const adminForm = ref({ username: '', password: '' });
         const orderNote = ref(''); const forgotPhone = ref(''); const isUploading = ref('');
         const newProduct = ref({ name: '', price: '', pairPrice: '', unit: '個', category: 'regular', image: '', description: '' });
@@ -428,57 +425,277 @@ createApp({
         const users = ref([]); const products = ref([]); const cart = ref([]); const orders = ref([]);
         let db, productsRef, usersRef, ordersRef;
 
-        // --- 核心功能函數 ---
+        onMounted(() => {
+            const sessionUser = sessionStorage.getItem('fd_current_user');
+            const sessionAdmin = sessionStorage.getItem('fd_is_admin');
+            if (sessionUser) currentUser.value = JSON.parse(sessionUser);
+            else if (sessionAdmin === 'true') isAdmin.value = true;
+            initFirebaseListeners();
+        });
+
         const initFirebaseListeners = () => {
             if (!firebase.apps.length) firebase.initializeApp({ databaseURL: firebaseDatabaseURL });
             db = firebase.database();
-            db.ref('products').on('value', (s) => { products.value = s.val() ? Object.keys(s.val()).map(k => ({ id: k, ...s.val()[k] })) : []; dbLoading.value = false; });
-            db.ref('users').on('value', (s) => { users.value = s.val() ? Object.values(s.val()) : []; });
-            db.ref('orders').on('value', (s) => { orders.value = s.val() ? Object.values(s.val()) : []; });
+            
+            productsRef = db.ref('products');
+            productsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                
+                if (!data) {
+                    products.value = [];
+                    dbLoading.value = false;
+                    return;
+                }
+
+                const cloudKeys = Object.keys(data);
+
+                // 【核心修正：就地比對增量更新法 (In-place Map)】
+                // 1. 先把雲端已經被刪除的產品從本地過濾掉（防止誤刪連鎖 Bug）
+                products.value = products.value.filter(p => cloudKeys.includes(p.id));
+
+                // 2. 遍歷雲端數據，就地更新本地屬性（不破壞 Vue 物件參考，絕對不會重複渲染）
+                cloudKeys.forEach(key => {
+                    const cloudItem = data[key];
+                    if (!cloudItem) return;
+
+                    const localItem = products.value.find(p => p.id === key);
+
+                    if (localItem) {
+                        // 如果本地已有這個產品，只在非焦點操作時同步（或者直接 assign 屬性），確保打字時不重繪 DOM
+                        localItem.name = cloudItem.name || '';
+                        localItem.price = Number(cloudItem.price) || 0;
+                        localItem.pairPrice = cloudItem.pairPrice ? Number(cloudItem.pairPrice) : '';
+                        localItem.unit = cloudItem.unit || '個';
+                        localItem.category = cloudItem.category || 'regular';
+                        localItem.image = cloudItem.image || '';
+                        localItem.description = cloudItem.description || '';
+                    } else {
+                        // 如果是全新的產品，才 push 進去
+                        products.value.push({
+                            id: key,
+                            name: cloudItem.name || '',
+                            price: Number(cloudItem.price) || 0,
+                            pairPrice: cloudItem.pairPrice ? Number(cloudItem.pairPrice) : '',
+                            unit: cloudItem.unit || '個',
+                            category: cloudItem.category || 'regular',
+                            image: cloudItem.image || '',
+                            description: cloudItem.description || ''
+                        });
+                    }
+                });
+
+                dbLoading.value = false;
+            });
+            
+            usersRef = db.ref('users'); usersRef.on('value', (snapshot) => { users.value = snapshot.val() ? Object.values(snapshot.val()) : []; });
+            ordersRef = db.ref('orders'); ordersRef.on('value', (snapshot) => { orders.value = snapshot.val() ? Object.values(snapshot.val()) : []; });
         };
 
-        const handleAuth = () => { alert('請檢查登入邏輯'); }; // 修正了原本找不到的函數定義
-        const handleAdminLogin = () => { if (adminForm.value.username === 'admin' && adminForm.value.password === 'dragon888') { isAdmin.value = true; } else { alert('帳號錯誤'); } };
-        const logout = () => { window.location.reload(); };
-        const getItemCalculatedPrice = (item) => item.price * item.quantity;
+        const hotProducts = computed(() => products.value.filter(p => p && p.category === 'hot'));
+        const regularProducts = computed(() => products.value.filter(p => p && p.category !== 'hot'));
+        const sortedOrders = computed(() => [...orders.value].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
+        const myOrders = computed(() => currentUser.value ? sortedOrders.value.filter(o => o.customerPhone === currentUser.value.phone) : []);
         
-        // --- 執貨單核心 ---
-        const generatePackingReport = () => {
-            const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
-            if (activeOrders.length === 0) { alert('沒有有效訂單'); return; }
-            const summary = {};
-            activeOrders.forEach(o => o.items.forEach(i => {
-                if(!summary[i.name]) summary[i.name] = { total: 0, unit: i.unit || '個' };
-                summary[i.name].total += Number(i.quantity);
-            }));
-            let msg = `📦 【執貨總清單 - ${dateFilterMode.value}】\n\n`;
-            for (const name in summary) msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
-            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-        };
-
-        // --- 計算屬性 ---
         const filteredOrders = computed(() => {
             const now = new Date();
-            const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            return orders.value.filter(o => {
-                if (!o.date) return false;
-                const d = o.date.split(' ')[0];
-                if (dateFilterMode.value === 'today') return d === ymd(now);
-                if (dateFilterMode.value === 'custom') return d === customFilterDate.value;
+            const getYYYYMMDD = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const todayStr = getYYYYMMDD(now);
+            
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
+            const yesterdayStr = getYYYYMMDD(yesterday);
+
+            return sortedOrders.value.filter(ord => {
+                if (!ord.date) return false; 
+                const ordDatePart = ord.date.split(' ')[0];
+                if (dateFilterMode.value === 'today') return ordDatePart === todayStr;
+                if (dateFilterMode.value === 'yesterday') return ordDatePart === yesterdayStr;
+                if (dateFilterMode.value === 'month') return ordDatePart.startsWith(todayStr.substring(0,7));
+                if (dateFilterMode.value === 'custom') return ordDatePart === customFilterDate.value;
                 return true;
             });
         });
 
-        // --- 生命週期 ---
-        onMounted(() => { initFirebaseListeners(); });
+        const cartTotalQuantity = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+        const cartTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + getItemCalculatedPrice(item), 0));
 
-        // --- 導出 ---
-        return { 
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, 
-            showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, 
-            isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, 
-            filteredOrders, handleAuth, handleAdminLogin, logout, generatePackingReport, getItemCalculatedPrice,
-            setDateFilter: (m) => dateFilterMode.value = m 
+        const getItemCalculatedPrice = (item) => {
+            if (item.pairPrice && Number(item.pairPrice) > 0) {
+                return (Math.floor(item.quantity / 2) * Number(item.pairPrice)) + ((item.quantity % 2) * Number(item.price));
+            }
+            return item.price * item.quantity;
+        };
+
+        const setDateFilter = (mode) => { dateFilterMode.value = mode; };
+        
+        // 唯一定向同步到指定雲端節點
+        const updateProductInCloud = (prod) => { 
+            if(db && prod.id) {
+                db.ref(`products/${prod.id}`).set({
+                    name: prod.name || '',
+                    price: Number(prod.price) || 0,
+                    pairPrice: prod.pairPrice ? Number(prod.pairPrice) : '',
+                    unit: prod.unit || '個',
+                    category: prod.category || 'regular',
+                    image: prod.image || '',
+                    description: prod.description || ''
+                }); 
+            }
+        };
+
+        const uploadImage = async (event, target) => {
+            const file = event.target.files[0]; if (!file) return;
+            isUploading.value = target === 'newProduct' ? 'newProduct' : target.id;
+            const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', cloudinaryUploadPreset);
+            try {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, { method: 'POST', body: formData });
+                const result = await res.json();
+                if (result.secure_url) {
+                    if (target === 'newProduct') newProduct.value.image = result.secure_url;
+                    else { target.image = result.secure_url; updateProductInCloud(target); }
+                    alert('📸 上傳成功！');
+                }
+            } catch { alert('網絡錯誤'); } finally { isUploading.value = ''; }
+        };
+
+        const handleAuth = () => {
+            if (authMode.value === 'register') {
+                const cleanPhone = form.value.phone.trim();
+                if (users.value.find(u => u.phone === cleanPhone)) { alert('❌ 已變登記！'); return; }
+                const newUser = { name: form.value.name.trim(), phone: cleanPhone, address: form.value.address.trim(), password: form.value.password };
+                db.ref('users/' + cleanPhone).set(newUser).then(() => { currentUser.value = newUser; sessionStorage.setItem('fd_current_user', JSON.stringify(newUser)); });
+            } else {
+                const user = users.value.find(u => u.phone === form.value.phone.trim() && u.password === form.value.password);
+                if (user) { currentUser.value = user; sessionStorage.setItem('fd_current_user', JSON.stringify(user)); } else { alert('❌ 錯誤！'); }
+            }
+        };
+
+        const handleAdminLogin = () => {
+            if (adminForm.value.username.trim() === 'admin' && adminForm.value.password === 'dragon888') {
+                isAdmin.value = true; sessionStorage.setItem('fd_is_admin', 'true');
+            } else { alert('❌ 錯誤！'); }
+        };
+
+        const logout = () => {
+            if (productsRef) productsRef.off(); if (usersRef) usersRef.off(); if (ordersRef) ordersRef.off();
+            currentUser.value = null; isAdmin.value = false; cart.value = []; sessionStorage.clear();
+            authMode.value = 'login'; initFirebaseListeners();
+        };
+
+        const submitForgotPath = () => {
+            window.open(`https://wa.me/${merchantPhone}?text=忘記密碼:${forgotPhone.value}`, '_blank');
+        };
+
+        const searchUserFromDB = () => {
+            const user = users.value.find(u => u.phone === searchUserPhone.value.trim());
+            if (user) { foundUser.value = user; newPasswordForUser.value = user.password; } else { alert('❌ 找不到會員'); }
+        };
+
+        const updateUserPassword = () => {
+            db.ref(`users/${foundUser.value.phone}/password`).set(newPasswordForUser.value).then(() => alert('✅ 修改成功'));
+        };
+
+        const getCartQty = (id) => { const item = cart.value.find(c => c.id === id); return item ? item.quantity : 0; };
+        
+        const addToCart = (product) => {
+            const item = cart.value.find(c => c.id === product.id);
+            if (item) item.quantity++; 
+            else cart.value.push({ id: product.id, name: product.name, price: product.price, pairPrice: product.pairPrice||'', unit: product.unit||'個', quantity: 1 });
+        };
+
+        const removeFromCart = (product) => {
+            const item = cart.value.find(c => c.id === product.id);
+            if (item) { item.quantity--; if (item.quantity <= 0) cart.value = cart.value.filter(c => c.id !== product.id); }
+        };
+
+        const clearItemFromCart = (id) => { cart.value = cart.value.filter(c => c.id !== id); };
+        const openDescModal = (p) => { activeProduct.value = p; showDescModal.value = true; };
+        const quickAddToCart = () => { addToCart(activeProduct.value); showDescModal.value = false; };
+        const openZoomLightbox = (p) => { zoomProduct.value = p; showZoomLightbox.value = true; };
+        const closeZoomLightbox = () => { showZoomLightbox.value = false; };
+
+        const submitOrder = () => {
+            const now = new Date(); const orderId = 'ORD-' + now.getTime();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
+            const orderData = { id: orderId, timestamp: now.toISOString(), date: dateStr, customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address, items: cart.value, total: cartTotalPrice.value, note: orderNote.value, status: 'pending' };
+            
+            db.ref('orders/' + orderId).set(orderData).then(() => {
+                let details = ''; cart.value.forEach(i => { details += `• ${i.name} x ${i.quantity} ($${getItemCalculatedPrice(i)})\n`; });
+                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent('新訂單:\n'+details+'總額: $'+cartTotalPrice.value)}`, '_blank');
+                cart.value = []; showCartModal.value = false; viewMode.value = 'history';
+            });
+        };
+
+        const cancelOrder = (order) => { db.ref(`orders/${order.id}/status`).set('canceled'); };
+        const exportOrderToWhatsApp = (order) => { 
+            let itemDetails = '';
+            order.items.forEach(item => { itemDetails += `• ${item.name} x ${item.quantity}${item.unit || '個'}\n`; });
+            const deliveryMsg = `🚚 *【果味龍出貨單】*\n\n單號：${order.id}\n收件人：${order.customerName}\n電話：${order.customerPhone}\n地址：${order.address}\n内容：\n${itemDetails}總額: $${order.total}`;
+            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(deliveryMsg)}`, '_blank'); 
+        };
+
+        const sendBulkOrdersToWhatsApp = () => {
+            const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
+            if (activeOrders.length === 0) {
+                alert('目前篩選條件下沒有任何有效訂單可以匯出！');
+                return;
+            }
+
+            let titleStr = '';
+            if (dateFilterMode.value === 'today') titleStr = '今日';
+            else if (dateFilterMode.value === 'yesterday') titleStr = '昨日';
+            else if (dateFilterMode.value === 'month') titleStr = '本月';
+            else titleStr = customFilterDate.value || '指定日期';
+
+            let bulkMsg = `📦 🐉 *【果味龍 - ${titleStr}全部訂單總覽】* 🐉 📦\n`;
+            bulkMsg += `總計訂單量：${activeOrders.length} 筆\n`;
+            bulkMsg += `------------------------------------\n\n`;
+
+            activeOrders.forEach((ord, index) => {
+                bulkMsg += `【單號 ${index + 1}】 ${ord.id}\n`;
+                bulkMsg += `👤 顧客：${ord.customerName} (${ord.customerPhone})\n`;
+                bulkMsg += `📍 地址：${ord.address}\n`;
+                bulkMsg += `🛍️ 購買內容：\n`;
+                ord.items.forEach(item => {
+                    bulkMsg += `  • ${item.name} x ${item.quantity}${item.unit || '個'}\n`;
+                });
+                if (ord.note) bulkMsg += `✍️ 備註：${ord.note}\n`;
+                bulkMsg += `💰 金額：$${ord.total}\n`;
+                bulkMsg += `------------------------------------\n\n`;
+            });
+
+            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(bulkMsg)}`, '_blank');
+        };
+
+        const addProduct = () => {
+            if (!newProduct.value.name || !newProduct.value.price) { alert('請填寫產品名稱及價錢！'); return; }
+            const newRef = db.ref('products').push(); 
+            
+            newRef.set({ 
+                name: newProduct.value.name.trim(), 
+                price: Number(newProduct.value.price), 
+                pairPrice: newProduct.value.pairPrice ? Number(newProduct.value.pairPrice) : '', 
+                unit: newProduct.value.unit, 
+                category: newProduct.value.category, 
+                image: newProduct.value.image, 
+                description: newProduct.value.description 
+            })
+            .then(() => {
+                alert('🍏 新產品已成功上架！');
+                newProduct.value = { name: '', price: '', pairPrice: '', unit: '個', category: 'regular', image: '', description: '' };
+            });
+        };
+
+        const deleteProduct = (id) => { 
+            if (confirm('確定要永久下架並刪除此產品嗎？')) {
+                db.ref('products/' + id).remove().then(() => {
+                    alert('🗑️ 產品已完全從資料庫移除。');
+                }); 
+            }
+        };
+
+        return {
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
         };
     }
 }).mount('#app');
