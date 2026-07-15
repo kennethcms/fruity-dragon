@@ -413,16 +413,26 @@ createApp({
         const cloudinaryUploadPreset = "nl3juyq6"; 
         const firebaseDatabaseURL = "https://fruity-dragon-de6b3-default-rtdb.firebaseio.com/"; 
 
-const submitOrder = (orderData) => {
-            let msg = `🛒 新訂單%0A%0A`;
-            msg += `客戶: ${orderData.customerName}%0A`;
-            msg += `電話: ${orderData.customerPhone}%0A`;
-            msg += `地址: ${orderData.address}%0A%0A`;
-            msg += `內容:%0A`;
+// 1. 修改後：WhatsApp 格式 (包含電話與地址)
+        const submitOrder = () => {
+            const orderData = {
+                customerName: currentUser.value.name,
+                customerPhone: currentUser.value.phone,
+                address: currentUser.value.address,
+                items: cart.value,
+                total: cartTotalPrice.value,
+                date: new Date().toISOString().split('T')[0]
+            };
+            
+            let msg = `🛒 新訂單通知%0A%0A`;
+            msg += `👤 客戶: ${orderData.customerName}%0A`;
+            msg += `📞 電話: ${orderData.customerPhone}%0A`;
+            msg += `📍 地址: ${orderData.address}%0A%0A`;
+            msg += `📦 內容:%0A`;
             orderData.items.forEach(i => { msg += `- ${i.name} x ${i.quantity}${i.unit}%0A`; });
-            msg += `%0A總額: $${orderData.total}`;
+            msg += `%0A💰 總額: $${orderData.total}`;
+            
             window.open(`https://wa.me/${merchantPhone}?text=${msg}`);
-        };
 
         const authMode = ref('login'); const currentUser = ref(null); const isAdmin = ref(false);
         const showCartModal = ref(false); const adminTab = ref('products'); const dbLoading = ref(true); const viewMode = ref('shop');
