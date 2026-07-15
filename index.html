@@ -420,31 +420,6 @@ createApp({
         const dateFilterMode = ref('today'); const customFilterDate = ref('');
         const form = ref({ name: '', phone: '', address: '', password: '' }); const adminForm = ref({ username: '', password: '' });
         const orderNote = ref(''); const forgotPhone = ref(''); const isUploading = ref('');
-        const newProduct = ref({ name: '', price: '', pairPrice: '', unit: '', category: 'regular', image: '' });
-        
-        const products = ref([]); const cart = ref([]); const orders = ref([]);
-
-        firebase.initializeApp({ databaseURL: firebaseDatabaseURL });
-        const db = firebase.database();
-
-        onMounted(() => {
-            db.ref('products').on('value', (snapshot) => {
-                const data = snapshot.val();
-                products.value = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-                dbLoading.value = false;
-            });
-            db.ref('orders').on('value', (snapshot) => {
-                const data = snapshot.val();
-                orders.value = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-            });
-        });
-        const authMode = ref('login'); const currentUser = ref(null); const isAdmin = ref(false);
-        const showCartModal = ref(false); const adminTab = ref('products'); const dbLoading = ref(true); const viewMode = ref('shop');
-        const showDescModal = ref(false); const activeProduct = ref(null); const showZoomLightbox = ref(false); const zoomProduct = ref(null);
-        const searchUserPhone = ref(''); const foundUser = ref(null); const newPasswordForUser = ref('');
-        const dateFilterMode = ref('today'); const customFilterDate = ref('');
-        const form = ref({ name: '', phone: '', address: '', password: '' }); const adminForm = ref({ username: '', password: '' });
-        const orderNote = ref(''); const forgotPhone = ref(''); const isUploading = ref('');
         const newProduct = ref({ name: '', price: '', pairPrice: '', unit: '個', category: 'regular', image: '', description: '' });
         
         const users = ref([]); const products = ref([]); const cart = ref([]); const orders = ref([]);
@@ -720,7 +695,7 @@ createApp({
         };
 
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
         };
     }
 }).mount('#app');
