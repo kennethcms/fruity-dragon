@@ -692,9 +692,46 @@ createApp({
                 }); 
             }
         };
+const generatePackingReport = () => {
+    // 1. 篩選該日所有有效訂單
+    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
+    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
 
+    if (dailyOrders.length === 0) {
+        alert('該日期沒有任何有效訂單！');
+        return;
+    }
+
+    // 2. 彙整產品總量
+    const summary = {};
+    dailyOrders.forEach(o => {
+        o.items.forEach(item => {
+            if (!summary[item.name]) {
+                summary[item.name] = { total: 0, unit: item.unit || '個' };
+            }
+            summary[item.name].total += item.quantity;
+        });
+    });
+
+    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
+    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
+    msg += `📦 產品彙整:\n`;
+    msg += `--------------------------\n`;
+    
+    for (const name in summary) {
+        msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
+    }
+    
+    msg += `--------------------------\n`;
+    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
+
+    // 4. 發送至 WhatsApp
+    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+};
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
+
+    generatePackingReport 
         };
     }
 }).mount('#app');
