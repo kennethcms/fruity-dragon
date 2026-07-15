@@ -727,31 +727,35 @@ const submitOrder = () => {
                 }); 
             }
         };
-        const generatePackingReport = () => {
-    // 篩選出該日期且未取消的訂單
-    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
-    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-    
-    const summary = {};
-    dailyOrders.forEach(o => {
-        o.items.forEach(item => {
-            if (!summary[item.name]) summary[item.name] = 0;
-            summary[item.name] += item.quantity;
-        });
-    });
+       const generatePackingReport = () => {
+            // 抓取當前篩選日期或預設今日
+            const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
+            const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
+            
+            // 彙整所有訂單的產品總量
+            const summary = {};
+            dailyOrders.forEach(o => {
+                o.items.forEach(item => {
+                    if (!summary[item.name]) {
+                        summary[item.name] = { total: 0, unit: item.unit || '個' };
+                    }
+                    summary[item.name].total += item.quantity;
+                });
+            });
 
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF產品名稱,總數量\n";
-    for (const name in summary) {
-        csvContent += `${name},${summary[name]}\n`;
-    }
+            // 生成 CSV 內容
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF產品名稱,總數量,單位\n";
+            for (const name in summary) {
+                csvContent += `${name},${summary[name].total},${summary[name].unit}\n`;
+            }
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `執貨單_${targetDate}.csv`);
-    document.body.appendChild(link);
-    link.click();
-};
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `執貨總表_${targetDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+        };
     
 
         return {
