@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    </head>
     <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -728,42 +727,43 @@ const submitOrder = () => {
                 }); 
             }
         };
-       const generatePackingReport = () => {
-    // 1. 篩選該日所有有效訂單
-    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
-    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
-
-    if (dailyOrders.length === 0) {
-        alert('該日期沒有任何有效訂單！');
-        return;
-    }
-
-    // 2. 彙整產品總量
-    const summary = {};
-    dailyOrders.forEach(o => {
-        o.items.forEach(item => {
-            if (!summary[item.name]) {
-                summary[item.name] = { total: 0, unit: item.unit || '個' };
+const generatePackingReport = () => {
+            // 獲取當前選定的日期
+            const targetDate = customFilterDate.value;
+            if (!targetDate) {
+                alert('請先選擇日期！');
+                return;
             }
-            summary[item.name].total += item.quantity;
-        });
-    });
 
-    // 3. 建立 WhatsApp 訊息格式 (與下單格式一致)
-    let msg = `📋 *${targetDate} 執貨總清單*\n\n`;
-    msg += `📦 產品彙整:\n`;
-    msg += `--------------------------\n`;
-    
-    for (const name in summary) {
-        msg += `• ${name} x ${summary[name].total}${summary[name].unit}\n`;
-    }
-    
-    msg += `--------------------------\n`;
-    msg += `✅ 總計訂單數: ${dailyOrders.length} 筆`;
+            // 篩選該日所有訂單
+            const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
+            
+            if (dailyOrders.length === 0) {
+                alert('該日期沒有任何訂單記錄！');
+                return;
+            }
 
-    // 4. 發送至 WhatsApp
-    window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-};
+            // 彙整產品總數
+            const summary = {};
+            dailyOrders.forEach(o => {
+                o.items.forEach(item => {
+                    if (!summary[item.name]) {
+                        summary[item.name] = { total: 0, unit: item.unit || '個' };
+                    }
+                    summary[item.name].total += item.quantity;
+                });
+            });
+
+            // 生成 WhatsApp 訊息內容
+            let msg = `📦 *【果味龍 - ${targetDate} 執貨總單】*\n\n`;
+            for (const name in summary) {
+                msg += `• ${name} : ${summary[name].total}${summary[name].unit}\n`;
+            }
+            msg += `\n共 ${dailyOrders.length} 筆訂單，請查收。`;
+
+            // 一鍵跳轉 WhatsApp
+            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        };
     
 
         return {
