@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>果味龍 Fruity Dragon - 每日果欄新鮮到貨</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -80,6 +80,7 @@
         .filter-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
         .date-input { padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
         .bulk-whatsapp-btn { background: #25D366; color: white; font-size: 13px; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; width: auto; margin-left: auto; }
+        .bulk-picking-btn { background: #1a73e8; color: white; font-size: 13px; padding: 8px 14px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; width: auto; margin-left: 8px; }
 
         .tab-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { flex: 1; padding: 10px; background: #eee; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
@@ -380,6 +381,9 @@
                     <button class="bulk-whatsapp-btn" @click="sendBulkOrdersToWhatsApp">
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
                     </button>
+                    <button class="bulk-picking-btn" @click="sendBulkPickingList">
+                        📦 一鍵發送執貨單 (產品總數)
+                    </button>
                 </div>
 
                 <div v-for="ord in filteredOrders" :key="ord.id" class="order-card" :style="ord.status === 'canceled' ? 'opacity: 0.6;' : ''">
@@ -614,24 +618,71 @@ createApp({
         const openZoomLightbox = (p) => { zoomProduct.value = p; showZoomLightbox.value = true; };
         const closeZoomLightbox = () => { showZoomLightbox.value = false; };
 
+        // 修正 1: 會員訂單 WhatsApp 包含電話和地址
         const submitOrder = () => {
             const now = new Date(); const orderId = 'ORD-' + now.getTime();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')} ${String(now.getMinutes()).padStart(2,'0')}`;
             const orderData = { id: orderId, timestamp: now.toISOString(), date: dateStr, customerName: currentUser.value.name, customerPhone: currentUser.value.phone, address: currentUser.value.address, items: cart.value, total: cartTotalPrice.value, note: orderNote.value, status: 'pending' };
             
             db.ref('orders/' + orderId).set(orderData).then(() => {
-                let details = ''; cart.value.forEach(i => { details += `• ${i.name} x ${i.quantity} ($${getItemCalculatedPrice(i)})\n`; });
-                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent('新訂單:\n'+details+'總額: $'+cartTotalPrice.value)}`, '_blank');
+                let details = '';
+                cart.value.forEach(i => {
+                    details += `• ${i.name} x ${i.quantity} ($${getItemCalculatedPrice(i)})\n`;
+                });
+                // 加入電話和地址
+                const msg = `新訂單:\n顧客: ${currentUser.value.name}\n電話: ${currentUser.value.phone}\n地址: ${currentUser.value.address}\n${details}總額: $${cartTotalPrice.value}`;
+                window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
                 cart.value = []; showCartModal.value = false; viewMode.value = 'history';
             });
         };
 
         const cancelOrder = (order) => { db.ref(`orders/${order.id}/status`).set('canceled'); };
+        
         const exportOrderToWhatsApp = (order) => { 
             let itemDetails = '';
             order.items.forEach(item => { itemDetails += `• ${item.name} x ${item.quantity}${item.unit || '個'}\n`; });
             const deliveryMsg = `🚚 *【果味龍出貨單】*\n\n單號：${order.id}\n收件人：${order.customerName}\n電話：${order.customerPhone}\n地址：${order.address}\n内容：\n${itemDetails}總額: $${order.total}`;
             window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(deliveryMsg)}`, '_blank'); 
+        };
+
+        // 修正 2: 一鍵發送執貨單 (產品總數)
+        const sendBulkPickingList = () => {
+            const activeOrders = filteredOrders.value.filter(o => o.status !== 'canceled');
+            if (activeOrders.length === 0) {
+                alert('目前篩選條件下沒有任何有效訂單可以匯出執貨單！');
+                return;
+            }
+
+            // 彙整產品總數
+            const productTotals = {};
+            activeOrders.forEach(ord => {
+                ord.items.forEach(item => {
+                    const key = item.name + (item.unit || '個');
+                    if (productTotals[key]) {
+                        productTotals[key] += item.quantity;
+                    } else {
+                        productTotals[key] = item.quantity;
+                    }
+                });
+            });
+
+            let titleStr = '';
+            if (dateFilterMode.value === 'today') titleStr = '今日';
+            else if (dateFilterMode.value === 'yesterday') titleStr = '昨日';
+            else if (dateFilterMode.value === 'month') titleStr = '本月';
+            else titleStr = customFilterDate.value || '指定日期';
+
+            let pickingMsg = `📦 🐉 *【果味龍 - ${titleStr}執貨單 (產品總數)】* 🐉 📦\n`;
+            pickingMsg += `總計訂單量：${activeOrders.length} 筆\n`;
+            pickingMsg += `------------------------------------\n\n`;
+
+            // 按產品總數列出
+            const sortedKeys = Object.keys(productTotals).sort();
+            sortedKeys.forEach(key => {
+                pickingMsg += `• ${key} x ${productTotals[key]}\n`;
+            });
+
+            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(pickingMsg)}`, '_blank');
         };
 
         const sendBulkOrdersToWhatsApp = () => {
@@ -695,7 +746,7 @@ createApp({
         };
 
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, sendBulkPickingList, addProduct, deleteProduct, getItemCalculatedPrice
         };
     }
 }).mount('#app');
