@@ -381,7 +381,11 @@
                         🟢 一鍵發送目前全部 ({{ filteredOrders.filter(o => o.status !== 'canceled').length }}) 筆訂單到 WhatsApp
                     </button>
                 </div>
-
+<div class="filter-group">
+    <button class="filter-btn" @click="generatePackingReport" style="background: #1976D2; color: white;">
+        📊 匯出當前日期執貨表 (CSV)
+    </button>
+</div>
                 <div v-for="ord in filteredOrders" :key="ord.id" class="order-card" :style="ord.status === 'canceled' ? 'opacity: 0.6;' : ''">
                     <div class="order-header">
                         <span>📅 {{ ord.date }}</span>
@@ -714,9 +718,36 @@ const submitOrder = () => {
                 }); 
             }
         };
+        const generatePackingReport = () => {
+    // 篩選出該日期且未取消的訂單
+    const targetDate = customFilterDate.value || new Date().toISOString().split('T')[0];
+    const dailyOrders = orders.value.filter(o => o.date === targetDate && o.status !== 'canceled');
+    
+    const summary = {};
+    dailyOrders.forEach(o => {
+        o.items.forEach(item => {
+            if (!summary[item.name]) summary[item.name] = 0;
+            summary[item.name] += item.quantity;
+        });
+    });
+
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF產品名稱,總數量\n";
+    for (const name in summary) {
+        csvContent += `${name},${summary[name]}\n`;
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `執貨單_${targetDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+};
+    
 
         return {
-            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice
+            authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
+    generatePackingReport 
         };
     }
 }).mount('#app');
