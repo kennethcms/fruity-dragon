@@ -784,41 +784,6 @@ createApp({
 
             window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
         };
-
-        // --- 優化後的下單功能 (確保手機點擊正常) ---
-        const submitOrder = () => {
-            const orderId = 'ORD-' + new Date().getTime();
-            const orderData = { 
-                id: orderId, 
-                date: new Date().toISOString().split('T')[0],
-                customerName: currentUser.value.name, 
-                customerPhone: currentUser.value.phone, 
-                address: currentUser.value.address, 
-                items: cart.value, 
-                total: cartTotalPrice.value, 
-                note: orderNote.value, 
-                status: 'pending' 
-            };
-            
-            // 寫入 DB 後發送 WhatsApp
-            let msg = `🛒 *新訂單通知*\n\n👤 客戶: ${currentUser.value.name}\n📞 電話: ${currentUser.value.phone}\n📍 地址: ${currentUser.value.address}\n--------------------------\n`;
-            cart.value.forEach(i => { msg += `• ${i.name} x ${i.quantity}${i.unit || '個'}\n`; });
-            msg += `--------------------------\n💰 總額: $${cartTotalPrice.value}`;
-            
-            window.open(`https://wa.me/${merchantPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-            cart.value = []; 
-            showCartModal.value = false;
-        };
-
-        return { 
-            sendPackingReportToWhatsApp, filteredOrders, customFilterDate, 
-            dateFilterMode, submitOrder, isAdmin: ref(false), adminTab: ref('orders') 
-        };
-    }
-}).mount('#app');
-</script>
-</body>
-</html>
         return {
             authMode, currentUser, isAdmin, showCartModal, adminTab, dbLoading, viewMode, showDescModal, activeProduct, showZoomLightbox, zoomProduct, dateFilterMode, customFilterDate, form, adminForm, orderNote, forgotPhone, isUploading, newProduct, searchUserPhone, foundUser, newPasswordForUser, products, cart, orders, hotProducts, regularProducts, myOrders, filteredOrders, cartTotalQuantity, cartTotalPrice, setDateFilter, updateProductInCloud, uploadImage, handleAuth, handleAdminLogin, logout, submitForgotPath, searchUserFromDB, updateUserPassword, getCartQty, addToCart, removeFromCart, clearItemFromCart, openDescModal, quickAddToCart, openZoomLightbox, closeZoomLightbox, submitOrder, cancelOrder, exportOrderToWhatsApp, sendBulkOrdersToWhatsApp, addProduct, deleteProduct, getItemCalculatedPrice, submitOrder,
 
